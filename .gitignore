@@ -20,3 +20,9 @@ build/
 
 # Markdown project docs (если не нужно отслеживать)
 PROJECT_CONTEXT.md
+
+# Build output
+out/
+dist/
+dist-ssr/
+build/
