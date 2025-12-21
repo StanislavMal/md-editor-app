@@ -1,0 +1,67 @@
+/* src/renderer/styles/components/_editor.css */
+
+/* Главный контейнер редактора */
+.editor-pane .cm-editor {
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+  box-sizing: border-box;
+  font-size: 15px;
+  font-family: var(--font-mono);
+  padding-top: var(--spacing-xl);
+}
+
+/* Контейнер для скролла */
+.editor-pane .cm-scroller {
+  background-color: var(--color-editor-bg);
+  box-shadow: var(--shadow-page);
+  padding: 15mm 0mm;
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-base);
+  overflow: auto !important;
+  width: 210mm;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cm-scroller::-webkit-scrollbar { width: 12px; }
+.cm-scroller::-webkit-scrollbar-track { background: transparent; }
+.cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 6px;
+  border: 3px solid var(--color-editor-bg);
+}
+.cm-scroller::-webkit-scrollbar-thumb:hover { background: var(--color-fg-subtle); }
+
+/* Область с текстом */
+.cm-content {
+  color: var(--color-editor-text);
+  caret-color: var(--color-primary);
+}
+
+/* Нумерация строк */
+.cm-gutters {
+  background-color: var(--color-editor-gutter) !important;
+  border-right: none !important;
+  transition: background-color var(--transition-base);
+}
+.cm-lineNumbers .cm-gutterElement {
+  color: var(--color-editor-line-number);
+  padding: 0 var(--spacing-sm) 0 var(--spacing-lg) !important;
+  font-size: 13px;
+  transition: color var(--transition-base);
+}
+
+/* Курсор и выделение */
+.cm-cursor {
+  border-left: 2px solid var(--color-primary) !important;
+}
+.cm-selectionBackground, .cm-content ::selection {
+  background-color: rgba(9, 105, 218, 0.12) !important;
+}
+[data-theme="dark"] .cm-selectionBackground, 
+[data-theme="dark"] .cm-content ::selection {
+  background-color: rgba(58, 139, 255, 0.2) !important;
+}

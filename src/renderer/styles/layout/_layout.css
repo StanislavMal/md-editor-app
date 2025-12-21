@@ -1,0 +1,57 @@
+/* src/renderer/styles/layout/_layout.css */
+
+.container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - var(--toolbar-height)); 
+}
+
+/* Панель редактора */
+.editor-pane {
+  flex: 1;
+  position: relative;
+  background-color: var(--color-editor-surface);
+  border-right: 1px solid var(--color-border-default);
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-slow);
+  overflow: hidden;
+}
+
+.editor-pane.fullwidth {
+  flex: 1;
+  border-right: none;
+}
+
+/* Панель превью */
+.preview-pane {
+  flex: 1;
+  background-color: var(--color-canvas-subtle);
+  padding: var(--spacing-xl) 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: all var(--transition-slow);
+}
+
+.preview-pane.hidden {
+  flex: 0;
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.preview-pane::-webkit-scrollbar {
+  width: 12px;
+}
+.preview-pane::-webkit-scrollbar-track {
+  background: var(--color-canvas-subtle);
+}
+.preview-pane::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 6px;
+  border: 3px solid var(--color-canvas-subtle);
+}
+.preview-pane::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fg-subtle);
+}

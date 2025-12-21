@@ -1,0 +1,29 @@
+/* src/renderer/styles/style.css */
+
+/*
+ * ================================================================
+ * ГЛАВНЫЙ ФАЙЛ СТИЛЕЙ
+ * 
+ * Этот файл не содержит стилей напрямую.
+ * Он использует @import для сборки всех модульных CSS-файлов
+ * в правильном порядке.
+ * 
+ * Порядок импорта важен:
+ * 1. Base - Переменные и базовые стили.
+ * 2. Layout - Основная структура/сетка приложения.
+ * 3. Components - Стили для отдельных UI-компонентов.
+ * ================================================================
+*/
+
+/* 1. BASE */
+@import url('./base/_variables.css');
+@import url('./base/_base.css');
+
+/* 2. LAYOUT */
+@import url('./layout/_layout.css');
+
+/* 3. COMPONENTS */
+@import url('./components/_toolbar.css');
+@import url('./components/_buttons.css');
+@import url('./components/_editor.css');
+@import url('./components/_preview.css');

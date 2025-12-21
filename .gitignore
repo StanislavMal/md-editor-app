@@ -1,0 +1,22 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+
+# Build
+dist/
+dist-ssr/
+build/
+
+# IDE & OS
+.DS_Store
+*.log
+.env
+.env.local
+
+# Tools
+.vinxi
+
+# Markdown project docs (если не нужно отслеживать)
+PROJECT_CONTEXT.md

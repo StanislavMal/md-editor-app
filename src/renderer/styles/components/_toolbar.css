@@ -1,0 +1,79 @@
+/* src/renderer/styles/components/_toolbar.css */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--toolbar-height);
+  background: linear-gradient(to bottom, var(--color-canvas), var(--color-canvas-subtle));
+  border-bottom: 1px solid var(--color-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  z-index: 1000;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.toolbar-left { flex: 1; justify-content: flex-start; }
+.toolbar-center { flex: 0 0 auto; }
+.toolbar-right { flex: 1; justify-content: flex-end; }
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-base);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border-muted);
+  margin: 0 var(--spacing-xs);
+  transition: background-color var(--transition-base);
+}
+
+.zoom-value {
+  min-width: 52px;
+  text-align: center;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-fg-default);
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+/* Адаптивность тулбара */
+@media (max-width: 1400px) {
+  .toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--toolbar-height);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  .toolbar-center {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar-group {
+    gap: 2px;
+    padding: 2px;
+  }
+}
