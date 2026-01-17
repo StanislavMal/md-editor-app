@@ -4,8 +4,18 @@ import { EditorState, StateEffect, StateField, EditorSelection, Compartment } fr
 import { EditorView, keymap, lineNumbers, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { LanguageDescription } from '@codemirror/language';
-import { languages } from '@codemirror/language-data';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { cpp } from '@codemirror/lang-cpp';
+import { java } from '@codemirror/lang-java';
+import { rust } from '@codemirror/lang-rust';
+import { go } from '@codemirror/lang-go';
+import { php } from '@codemirror/lang-php';
+import { sql } from '@codemirror/lang-sql';
+import { html } from '@codemirror/lang-html';
+import { css } from '@codemirror/lang-css';
+import { json } from '@codemirror/lang-json';
+import { xml } from '@codemirror/lang-xml';
 import { lightTheme, darkTheme } from './editor-theme.js';
 
 console.log('[Module Loaded] editor.js');
@@ -50,7 +60,34 @@ export function initializeEditor(onUpdate) {
     doc: `# Добро пожаловать!\n\nЭто ваш новый Markdown-редактор.`,
     extensions: [
       lineNumbers(), history(), drawSelection(), EditorView.lineWrapping,
-      markdown({ base: markdownLanguage, codeLanguages: (info) => LanguageDescription.matchLanguageName(languages, info)?.load() }),
+      markdown({
+        base: markdownLanguage,
+        codeLanguages: (info) => {
+          const langMap = {
+            javascript: javascript,
+            js: javascript,
+            typescript: javascript,
+            ts: javascript,
+            python: python,
+            py: python,
+            cpp: cpp,
+            'c++': cpp,
+            c: cpp,
+            java: java,
+            rust: rust,
+            rs: rust,
+            go: go,
+            golang: go,
+            php: php,
+            sql: sql,
+            html: html,
+            css: css,
+            json: json,
+            xml: xml,
+          };
+          return langMap[info.toLowerCase()] || null;
+        }
+      }),
       themeCompartment.of(getCurrentTheme()),
       keymap.of([
         { key: 'Shift-Enter', run: (view) => insertLineBreak(view) },
