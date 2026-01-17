@@ -230,11 +230,18 @@ export function applyMarkdown(type, view = editorView) {
         if (type === 'heading') {
             const line = state.doc.lineAt(range.from);
             const lineText = line.text;
-            const newHeading = lineText.startsWith('#') ? `#${lineText}` : `# ${lineText}`;
+            let newHeading;
+            if (lineText.startsWith('#')) {
+                // Убираем все # и пробелы в начале
+                newHeading = lineText.replace(/^#+\s*/, '');
+            } else {
+                // Добавляем # и пробел
+                newHeading = `# ${lineText}`;
+            }
             changes.push({ from: line.from, to: line.to, insert: newHeading });
             const newCursorPos = line.from + newHeading.length;
             selectionRanges.push(EditorSelection.range(newCursorPos, newCursorPos));
-            break; 
+            break;
         }
 
         const templates = {
