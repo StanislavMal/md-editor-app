@@ -105,7 +105,116 @@ async function callGeminiAPI(text, apiKey) {
   return response.data.candidates[0].content.parts[0].text;
 }
 
-// Основная функция форматирования текста через AI
+// Streaming DeepSeek API
+async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
+  try {
+    const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
+      model: API_CONFIG.deepseek.model,
+      messages: [{
+        role: 'user',
+        content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+      }],
+      max_tokens: API_CONFIG.deepseek.maxTokens,
+      temperature: 0.3,
+      stream: true
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'stream'
+    });
+
+    let accumulatedText = '';
+
+    response.data.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6);
+
+          if (jsonStr === '[DONE]') {
+            onComplete(accumulatedText);
+            return;
+          }
+
+          try {
+            const data = JSON.parse(jsonStr);
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedText += content;
+              onChunk(accumulatedText);
+            }
+          } catch (e) {
+            // Игнорируем невалидный JSON
+          }
+        }
+      }
+    });
+
+    response.data.on('error', (error) => {
+      onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
+    });
+
+  } catch (error) {
+    onError(error);
+  }
+}
+
+// Streaming Gemini API
+async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
+  try {
+    const response = await axios.post(`${API_CONFIG.gemini.baseURL}/models/${API_CONFIG.gemini.model}:streamGenerateContent?key=${apiKey}`, {
+      contents: [{
+        parts: [{
+          text: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: API_CONFIG.gemini.maxTokens
+      }
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      responseType: 'stream'
+    });
+
+    let accumulatedText = '';
+
+    response.data.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        try {
+          const data = JSON.parse(line);
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content) {
+            accumulatedText += content;
+            onChunk(accumulatedText);
+          }
+        } catch (e) {
+          // Игнорируем невалидный JSON
+        }
+      }
+    });
+
+    response.data.on('end', () => {
+      onComplete(accumulatedText);
+    });
+
+    response.data.on('error', (error) => {
+      onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
+    });
+
+  } catch (error) {
+    onError(error);
+  }
+}
+
+// Основная функция форматирования текста через AI (синхронная)
 export async function formatTextWithAI(text) {
   const settings = getAISettings();
 
@@ -152,6 +261,62 @@ export async function formatTextWithAI(text) {
     } else {
       throw new Error(`Ошибка: ${error.message}`);
     }
+  }
+}
+
+// Streaming версия для постепенного отображения текста
+export async function formatTextWithAIStreaming(text, onChunk, onComplete, onError) {
+  const settings = getAISettings();
+
+  if (!text || text.trim().length === 0) {
+    onError(new Error('Текст для форматирования пуст'));
+    return;
+  }
+
+  // Проверка наличия API ключа
+  const apiKey = settings.provider === 'deepseek' ? settings.deepseekKey : settings.geminiKey;
+  if (!apiKey) {
+    onError(new Error(`API ключ для ${settings.provider} не настроен. Добавьте ключ в настройках.`));
+    return;
+  }
+
+  try {
+    const chunks = splitTextIntoChunks(text);
+
+    if (chunks.length === 1) {
+      // Для одного чанка используем streaming
+      if (settings.provider === 'deepseek') {
+        await streamDeepSeekAPI(chunks[0], apiKey, onChunk, onComplete, onError);
+      } else {
+        await streamGeminiAPI(chunks[0], apiKey, onChunk, onComplete, onError);
+      }
+    } else {
+      // Для нескольких чанков обрабатываем последовательно, но без streaming
+      const results = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        let formattedChunk;
+        if (settings.provider === 'deepseek') {
+          formattedChunk = await callDeepSeekAPI(chunk, apiKey);
+        } else {
+          formattedChunk = await callGeminiAPI(chunk, apiKey);
+        }
+        results.push(formattedChunk);
+
+        // Отправляем промежуточный результат
+        const currentResult = results.join('\n\n');
+        onChunk(currentResult);
+
+        // Небольшая пауза между чанками для лучшего UX
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      onComplete(results.join('\n\n'));
+    }
+  } catch (error) {
+    console.error('[AI] Ошибка streaming форматирования:', error);
+    onError(error);
   }
 }
 

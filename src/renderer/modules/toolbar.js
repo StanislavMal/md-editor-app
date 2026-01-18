@@ -4,7 +4,7 @@ console.log('[Module Loaded] toolbar.js');
 import { applyMarkdown, insertLineBreak, getEditorView } from './editor.js';
 import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.js';
 import { handleQuickSave } from './file-io.js';
-import { formatTextWithAI, saveAISettings, getAISettingsPublic, testAPIConnection } from './ai.js';
+import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection } from './ai.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -78,12 +78,22 @@ export function initializeToolbar(editorView) {
 
 }
 
+// Глобальная переменная для отслеживания состояния генерации
+let isGenerating = false;
+let abortController = null;
+
 /**
- * Обрабатывает AI форматирование текста
+ * Обрабатывает AI форматирование текста с streaming
  * @param {import('@codemirror/view').EditorView} editorView - Экземпляр редактора
  */
-async function handleAIFormat(editorView) {
+function handleAIFormat(editorView) {
   if (!editorView) return;
+
+  // Если генерация уже идет, останавливаем её
+  if (isGenerating) {
+    stopGeneration();
+    return;
+  }
 
   const text = editorView.state.doc.toString().trim();
 
@@ -92,35 +102,78 @@ async function handleAIFormat(editorView) {
     return;
   }
 
-  // Показываем индикатор загрузки
+  startGeneration(editorView, text);
+}
+
+/**
+ * Начинает генерацию текста
+ */
+function startGeneration(editorView, text) {
+  isGenerating = true;
+  abortController = new AbortController();
+
   const aiButton = document.getElementById('btn-ai-format');
   const originalText = aiButton.innerHTML;
-  aiButton.innerHTML = '<div class="spinner" style="width: 12px; height: 12px; border: 2px solid #ccc; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>';
-  aiButton.disabled = true;
 
-  try {
-    console.log('[AI] Начинаем форматирование текста...');
-    const formattedText = await formatTextWithAI(text);
+  // Меняем кнопку на "Стоп"
+  aiButton.innerHTML = '⏹️';
+  aiButton.title = 'Остановить генерацию (MD AI)';
+  aiButton.style.backgroundColor = '#dc3545';
+  aiButton.style.color = 'white';
 
-    // Заменяем весь текст в редакторе
-    editorView.dispatch({
-      changes: {
-        from: 0,
-        to: editorView.state.doc.length,
-        insert: formattedText
-      },
-      selection: { anchor: formattedText.length }
-    });
+  console.log('[AI] Начинаем streaming форматирование текста...');
 
-    console.log('[AI] Форматирование завершено успешно');
-  } catch (error) {
-    console.error('[AI] Ошибка форматирования:', error);
-    alert(`Ошибка AI форматирования: ${error.message}`);
-  } finally {
-    // Восстанавливаем кнопку
-    aiButton.innerHTML = originalText;
-    aiButton.disabled = false;
+  formatTextWithAIStreaming(
+    text,
+    // onChunk - вызывается при получении очередного кусочка текста
+    (chunkText) => {
+      if (abortController.signal.aborted) return;
+
+      editorView.dispatch({
+        changes: {
+          from: 0,
+          to: editorView.state.doc.length,
+          insert: chunkText
+        },
+        selection: { anchor: chunkText.length }
+      });
+    },
+    // onComplete - вызывается при завершении генерации
+    (finalText) => {
+      if (abortController.signal.aborted) return;
+
+      console.log('[AI] Streaming форматирование завершено успешно');
+      stopGeneration();
+    },
+    // onError - вызывается при ошибке
+    (error) => {
+      if (abortController.signal.aborted) return;
+
+      console.error('[AI] Ошибка streaming форматирования:', error);
+      alert(`Ошибка AI форматирования: ${error.message}`);
+      stopGeneration();
+    }
+  );
+}
+
+/**
+ * Останавливает генерацию текста
+ */
+function stopGeneration() {
+  if (abortController) {
+    abortController.abort();
   }
+
+  isGenerating = false;
+  abortController = null;
+
+  const aiButton = document.getElementById('btn-ai-format');
+  const originalHTML = '<svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0 0 2.22c1.58-.64 3.129-.82 4.186-.82s2.606.18 4.186.82a1.54 1.54 0 0 0 0-2.22c-.658-.215-1.777-.57-2.887-.87C9.843.266 8.69 0 8 0zM5.264 1.441c.646-.311 1.353-.441 2.736-.441s2.09.13 2.736.44l.783.38c.68.329 1.059.497 1.659.741.601.246 1.305.49 2.049.679A1.5 1.5 0 0 1 16 5.53c0 .449-.131.807-.508 1.07-.377.265-.91.43-1.514.511a3.746 3.746 0 0 1-.666.082c-.551 0-1.057-.062-1.47-.104a3.75 3.75 0 0 1-1.026-.25c-.595-.283-1.267-.465-2.041-.465s-1.446.182-2.041.465a3.75 3.75 0 0 1-1.026.25c-.413.042-.919.104-1.47.104a3.746 3.746 0 0 1-.666-.082c-.604-.08-1.137-.246-1.514-.511A1.495 1.495 0 0 1 0 5.53a1.5 1.5 0 0 1 1.076-1.408c.744-.189 1.448-.433 2.049-.679.6-.244.979-.412 1.659-.741l.783-.38z"/><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg>';
+
+  aiButton.innerHTML = originalHTML;
+  aiButton.title = 'Форматировать текст через AI (MD AI)';
+  aiButton.style.backgroundColor = '';
+  aiButton.style.color = '';
 }
 
 /**
