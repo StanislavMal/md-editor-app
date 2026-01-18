@@ -7,6 +7,8 @@ import './styles/style.css';
 
 console.log('[Renderer] renderer.js: Скрипт начал выполняться.');
 
+console.time('Total App Initialization');
+
 // Добавляем функции в глобальный window для доступа из main process
 import { hasUnsavedChanges, getCurrentFileName, isFileLoadedFromDisk } from './modules/state.js';
 import { handleQuickSave } from './modules/file-io.js';
@@ -90,26 +92,38 @@ const handlePreviewScroll = (line, scrollElement) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[Renderer] DOMContentLoaded fired');
+  console.time('DOMContentLoaded to Ready');
 
   try {
     console.log('[Renderer] 1. Initializing state...');
+    console.time('State Init');
     initializeState();
+    console.timeEnd('State Init');
 
     console.log('[Renderer] 2. Initializing editor...');
+    console.time('Editor Init');
     const editorView = initializeEditor(scheduleUpdate);
+    console.timeEnd('Editor Init');
     console.log('[Renderer] Editor view created:', !!editorView);
 
     console.log('[Renderer] 3. Initializing toolbar...');
+    console.time('Toolbar Init');
     initializeToolbar(editorView);
+    console.timeEnd('Toolbar Init');
 
     console.log('[Renderer] 4. Initializing file IO...');
+    console.time('FileIO Init');
     initializeFileIO(editorView);
+    console.timeEnd('FileIO Init');
 
     console.log('[Renderer] 5. Setting up scroll sync...');
+    console.time('Scroll Sync Setup');
     setEditorScrollCallback(handleEditorScroll);
     setPreviewScrollCallback(handlePreviewScroll);
+    console.timeEnd('Scroll Sync Setup');
 
     console.log('[Renderer] 6. Initializing title bar buttons...');
+    console.time('Title Bar Init');
     // Обработчики для кнопок шапки
     document.getElementById('minimize-btn')?.addEventListener('click', () => {
       window.electronAPI.minimizeWindow();
@@ -120,12 +134,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-btn')?.addEventListener('click', () => {
       window.electronAPI.closeWindow();
     });
+    console.timeEnd('Title Bar Init');
 
     console.log('[Renderer] 7. Initial rendering...');
+    console.time('Initial Render');
     scheduleUpdate(editorView.state.doc.toString());
+    console.timeEnd('Initial Render');
 
+    console.timeEnd('DOMContentLoaded to Ready');
+    console.timeEnd('Total App Initialization');
     console.log('[Renderer] Initialization complete!');
+
+    // Скрываем loading overlay
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 300); // Ждем завершения transition
+    }
   } catch (error) {
     console.error('[Renderer] Critical error during initialization:', error);
+    // В случае ошибки тоже скрываем overlay
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 300);
+    }
   }
 });

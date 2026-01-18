@@ -21,6 +21,67 @@ import { setUnsavedChanges } from './state.js';
 
 console.log('[Module Loaded] editor.js');
 
+// Кэш для загруженных языков
+const languageCache = new Map();
+
+// Ленивая загрузка языков CodeMirror
+async function lazyLoadLanguage(info) {
+  const langName = info.toLowerCase();
+
+  // Проверяем кэш
+  if (languageCache.has(langName)) {
+    return languageCache.get(langName);
+  }
+
+  // Базовые языки, которые уже импортированы
+  const baseLanguages = {
+    javascript,
+    js: javascript,
+    typescript: javascript,
+    ts: javascript,
+    python,
+    py: python,
+    cpp,
+    'c++': cpp,
+    c: cpp,
+    java,
+    rust,
+    rs: rust,
+    go,
+    golang: go,
+    php,
+    sql,
+    html,
+    css,
+    json,
+    xml,
+  };
+
+  if (baseLanguages[langName]) {
+    languageCache.set(langName, baseLanguages[langName]);
+    return baseLanguages[langName];
+  }
+
+  // Динамическая загрузка дополнительных языков (если понадобится в будущем)
+  try {
+    let langModule;
+    switch (langName) {
+      // Можно добавить другие языки здесь по мере необходимости
+      default:
+        return null; // Неизвестный язык
+    }
+
+    if (langModule && langModule.default) {
+      languageCache.set(langName, langModule.default);
+      return langModule.default;
+    }
+  } catch (error) {
+    console.warn(`[Editor] Failed to load language: ${langName}`, error);
+  }
+
+  return null;
+}
+
 let editorView;
 let onScrollCallback = () => {};
 let themeCompartment = new Compartment();
@@ -55,39 +116,18 @@ const placeholderField = StateField.define({
 });
 
 export function initializeEditor(onUpdate) {
+  console.time('Editor DOM Query');
   const editorPane = document.querySelector('.editor-pane');
+  console.timeEnd('Editor DOM Query');
 
+  console.time('EditorState Create');
   const initialState = EditorState.create({
     doc: `# Добро пожаловать!\n\nЭто ваш новый Markdown-редактор.`,
     extensions: [
       lineNumbers(), history(), drawSelection(), EditorView.lineWrapping,
       markdown({
         base: markdownLanguage,
-        codeLanguages: (info) => {
-          const langMap = {
-            javascript: javascript,
-            js: javascript,
-            typescript: javascript,
-            ts: javascript,
-            python: python,
-            py: python,
-            cpp: cpp,
-            'c++': cpp,
-            c: cpp,
-            java: java,
-            rust: rust,
-            rs: rust,
-            go: go,
-            golang: go,
-            php: php,
-            sql: sql,
-            html: html,
-            css: css,
-            json: json,
-            xml: xml,
-          };
-          return langMap[info.toLowerCase()] || null;
-        }
+        codeLanguages: lazyLoadLanguage,
       }),
       themeCompartment.of(getCurrentTheme()),
       keymap.of([
@@ -120,8 +160,11 @@ export function initializeEditor(onUpdate) {
       })
     ],
   });
+  console.timeEnd('EditorState Create');
 
+  console.time('EditorView Create');
   editorView = new EditorView({ state: initialState, parent: editorPane });
+  console.timeEnd('EditorView Create');
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {

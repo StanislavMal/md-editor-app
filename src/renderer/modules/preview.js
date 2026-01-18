@@ -92,16 +92,27 @@ export function scheduleUpdate(markdownText) {
     }, DEBOUNCE_DELAY);
 }
 async function updatePreview(markdownText) {
+    console.time('Update Preview Total');
     currentPaginationProcessId++;
     if (!markdownText.trim()) {
         previewContainer.innerHTML = '';
         previewContainer.appendChild(createPage());
+        console.timeEnd('Update Preview Total');
         return;
     }
 
+    console.time('Markdown Convert');
     const html = await window.electronAPI.convertMarkdown(markdownText);
+    console.timeEnd('Markdown Convert');
+
+    console.time('HTML Set');
     previewContent.innerHTML = html;
+    console.timeEnd('HTML Set');
+
+    console.time('Paginate And Render');
     paginateAndRender(previewContent.children);
+    console.timeEnd('Paginate And Render');
+    console.timeEnd('Update Preview Total');
 }
 async function paginateAndRender(nodes) {
     const processId = currentPaginationProcessId;
@@ -110,6 +121,7 @@ async function paginateAndRender(nodes) {
     measurementContainer.style.position = 'absolute';
     measurementContainer.style.visibility = 'hidden';
     measurementContainer.style.left = '-9999px';
+    measurementContainer.style.width = '210mm'; // A4 ширина
     document.body.appendChild(measurementContainer);
 
     const pageSizer = createPage();
@@ -127,11 +139,17 @@ async function paginateAndRender(nodes) {
     let currentPage = createPage();
     measurementContainer.appendChild(currentPage);
 
-    for (const node of Array.from(nodes)) {
+    // Оптимизация: обрабатываем узлы пакетами для лучшей производительности
+    const BATCH_SIZE = 10;
+    const nodesArray = Array.from(nodes);
+
+    for (let i = 0; i < nodesArray.length; i++) {
         if (processId !== currentPaginationProcessId) {
             document.body.removeChild(measurementContainer);
             return;
         }
+
+        const node = nodesArray[i];
 
         if (node.nodeName === 'PRE') {
             currentPage = handlePreBlock(node, currentPage, pages, measurementContainer, pageContentHeight);
@@ -140,8 +158,9 @@ async function paginateAndRender(nodes) {
         } else {
             currentPage = handleDefaultNode(node, currentPage, pages, measurementContainer, pageContentHeight);
         }
-        
-        if (pages.length % 5 === 0) {
+
+        // Даем браузеру отдохнуть каждые BATCH_SIZE элементов
+        if (i % BATCH_SIZE === 0) {
             await new Promise(resolve => requestAnimationFrame(resolve));
         }
     }
@@ -149,9 +168,9 @@ async function paginateAndRender(nodes) {
     if (currentPage.querySelector('.markdown-body').childElementCount > 0) {
         pages.push(currentPage);
     }
-    
+
     document.body.removeChild(measurementContainer);
-    
+
     if (processId === currentPaginationProcessId) {
         const scrollY = previewPane.scrollTop;
         previewContainer.innerHTML = '';
