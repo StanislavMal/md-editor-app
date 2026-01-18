@@ -118,6 +118,8 @@ const placeholderField = StateField.define({
 export function initializeEditor(onUpdate) {
   console.time('Editor DOM Query');
   const editorPane = document.querySelector('.editor-pane');
+  // Добавляем класс для игнорирования MathJax
+  editorPane.classList.add('mathjax-ignore');
   console.timeEnd('Editor DOM Query');
 
   console.time('EditorState Create');

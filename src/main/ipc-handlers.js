@@ -14,6 +14,7 @@ import {
   getGitHubCSS,
   getPrintCSS,
   getHighlightCSS,
+  getKatexCSS,
   buildFullHTML
 } from './file-utils.js';
 
@@ -153,9 +154,10 @@ export function registerIpcHandlers(mainWindow) {
       const githubCss = await getGitHubCSS();
       const printCss = await getPrintCSS();
       const highlightCss = await getHighlightCSS();
+      const katexCss = await getKatexCSS();
 
       let pdfReadyHtml = await convertImagesToBase64(singleHtmlString, net);
-      const fullHtml = await buildFullHTML(pdfReadyHtml, githubCss, printCss, highlightCss);
+      const fullHtml = await buildFullHTML(pdfReadyHtml, githubCss, printCss, highlightCss, katexCss);
 
       const printWindow = new BrowserWindow({
         show: false,

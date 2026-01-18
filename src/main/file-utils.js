@@ -89,7 +89,17 @@ export async function getHighlightCSS() {
   }
 }
 
-export async function buildFullHTML(htmlContent, githubCss, printCss, highlightCss) {
+export async function getKatexCSS() {
+  try {
+    const cssPath = path.join(__dirname, '../../node_modules/katex/dist/katex.css');
+    return await fs.readFile(cssPath, 'utf-8');
+  } catch (error) {
+    console.error("Не удалось загрузить KaTeX CSS:", error);
+    return '';
+  }
+}
+
+export async function buildFullHTML(htmlContent, githubCss, printCss, highlightCss, katexCss) {
   return `
     <!DOCTYPE html>
     <html>
@@ -99,6 +109,7 @@ export async function buildFullHTML(htmlContent, githubCss, printCss, highlightC
         ${githubCss}
         ${printCss}
         ${highlightCss}
+        ${katexCss}
       </style>
     </head>
     <body>

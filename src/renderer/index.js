@@ -141,6 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleUpdate(editorView.state.doc.toString());
     console.timeEnd('Initial Render');
 
+    console.log('[Renderer] 8. Initializing MathJax...');
+    console.time('MathJax Init');
+    // Инициализация MathJax после загрузки всех компонентов
+    if (window.MathJax) {
+      // MathJax 3 использует другой API
+      MathJax.startup.promise.then(() => {
+        console.log('[Renderer] MathJax initialized successfully');
+        // Перерендерим preview после инициализации MathJax
+        scheduleUpdate(editorView.state.doc.toString());
+      }).catch((error) => {
+        console.error('[Renderer] MathJax initialization failed:', error);
+      });
+    } else {
+      console.warn('[Renderer] MathJax not found, math formulas may not render');
+    }
+    console.timeEnd('MathJax Init');
+
     console.timeEnd('DOMContentLoaded to Ready');
     console.timeEnd('Total App Initialization');
     console.log('[Renderer] Initialization complete!');

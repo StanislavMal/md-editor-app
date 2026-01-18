@@ -18,7 +18,7 @@ let previewContent;
 function initializePreviewDOM() {
     previewContent = document.createElement('div');
     previewContent.id = 'preview-content';
-    previewContent.className = 'markdown-body';
+    previewContent.className = 'markdown-body mathjax-preview';
     previewPane.appendChild(previewContent);
     previewPane.addEventListener('scroll', handlePreviewScroll);
 }
@@ -109,6 +109,18 @@ async function updatePreview(markdownText) {
     previewContent.innerHTML = html;
     console.timeEnd('HTML Set');
 
+    console.time('MathJax Typeset');
+    // Обработка MathJax формул после установки HTML
+    if (window.MathJax && window.MathJax.typeset) {
+        try {
+            await window.MathJax.typeset();
+            console.log('[Preview] MathJax formulas processed');
+        } catch (error) {
+            console.error('[Preview] MathJax typeset failed:', error);
+        }
+    }
+    console.timeEnd('MathJax Typeset');
+
     console.time('Paginate And Render');
     paginateAndRender(previewContent.children);
     console.timeEnd('Paginate And Render');
@@ -176,6 +188,16 @@ async function paginateAndRender(nodes) {
         previewContainer.innerHTML = '';
         pages.forEach(page => previewContainer.appendChild(page));
         previewPane.scrollTop = scrollY;
+
+        // Повторная обработка MathJax формул после пагинации
+        if (window.MathJax && window.MathJax.typeset) {
+            try {
+                window.MathJax.typeset();
+                console.log('[Preview] MathJax formulas processed after pagination');
+            } catch (error) {
+                console.error('[Preview] MathJax typeset failed after pagination:', error);
+            }
+        }
     }
 }
 function handleDefaultNode(node, currentPage, pages, measurementContainer, pageContentHeight) {
@@ -293,7 +315,7 @@ function createPage() {
     const page = document.createElement('div');
     page.className = 'page';
     const content = document.createElement('div');
-    content.className = 'markdown-body';
+    content.className = 'markdown-body mathjax-preview';
     page.appendChild(content);
     return page;
 }
