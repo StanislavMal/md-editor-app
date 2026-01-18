@@ -1,4 +1,5 @@
 // src/renderer/modules/ai.js
+import { markdown } from '@codemirror/lang-markdown';
 import axios from 'axios';
 
 console.log('[Module Loaded] ai.js');
@@ -7,13 +8,13 @@ console.log('[Module Loaded] ai.js');
 const API_CONFIG = {
   deepseek: {
     baseURL: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
-    maxTokens: 4000
+    model: 'deepseek-reasoner',
+    maxTokens: 32000
   },
   gemini: {
-    baseURL: 'https://generativelanguage.googleapis.com/v1beta',
-    model: 'gemini-1.5-flash',
-    maxTokens: 8000
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-3-flash-preview',
+    maxTokens: 80000
   }
 };
 
@@ -86,23 +87,22 @@ async function callDeepSeekAPI(text, apiKey) {
 
 // Вызов Gemini API
 async function callGeminiAPI(text, apiKey) {
-  const response = await axios.post(`${API_CONFIG.gemini.baseURL}/models/${API_CONFIG.gemini.model}:generateContent?key=${apiKey}`, {
-    contents: [{
-      parts: [{
-        text: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
-      }]
+  const response = await axios.post(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
+    model: API_CONFIG.gemini.model,
+    messages: [{
+      role: 'user',
+      content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
     }],
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: API_CONFIG.gemini.maxTokens
-    }
+    max_tokens: API_CONFIG.gemini.maxTokens,
+    temperature: 0.3
   }, {
     headers: {
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     }
   });
 
-  return response.data.candidates[0].content.parts[0].text;
+  return response.data.choices[0].message.content;
 }
 
 // Streaming DeepSeek API
@@ -176,22 +176,22 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
 // Streaming Gemini API
 async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
   try {
-    // Используем fetch для streaming
-    const response = await fetch(`${API_CONFIG.gemini.baseURL}/models/${API_CONFIG.gemini.model}:streamGenerateContent?key=${apiKey}`, {
+    // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
+    const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
-          }]
+        model: API_CONFIG.gemini.model,
+        messages: [{
+          role: 'user',
+          content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. НЕ оборачивай результат в тройные обратные кавычки или блоки кода. Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
         }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: API_CONFIG.gemini.maxTokens
-        }
+        max_tokens: API_CONFIG.gemini.maxTokens,
+        temperature: 0.3,
+        stream: true
       })
     });
 
@@ -215,15 +215,24 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
       const lines = chunk.split('\n').filter(line => line.trim());
 
       for (const line of lines) {
-        try {
-          const data = JSON.parse(line);
-          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (content) {
-            accumulatedText += content;
-            onChunk(accumulatedText);
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6);
+
+          if (jsonStr === '[DONE]') {
+            onComplete(accumulatedText);
+            return;
           }
-        } catch (e) {
-          // Игнорируем невалидный JSON
+
+          try {
+            const data = JSON.parse(jsonStr);
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedText += content;
+              onChunk(accumulatedText);
+            }
+          } catch (e) {
+            // Игнорируем невалидный JSON
+          }
         }
       }
     }
