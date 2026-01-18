@@ -300,6 +300,10 @@ export function insertLineBreak(view = editorView) {
     return true;
 }
 
+export function getEditorView() {
+  return editorView;
+}
+
 async function handleImageUpload(base64Data, view) {
   const uploadId = `upload-${Date.now()}`;
   const placeholderText = `\n\n[Загрузка изображения ${uploadId}...]\n\n`;

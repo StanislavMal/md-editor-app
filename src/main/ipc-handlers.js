@@ -296,5 +296,38 @@ export function registerIpcHandlers(mainWindow) {
     if (window) window.close();
   });
 
+  ipcMain.handle('get-unsaved-changes', async (event) => {
+    // Получить состояние несохраненных изменений из рендерера
+    return await event.sender.executeJavaScript(`
+      (function() {
+        const state = window.modules?.state?.hasUnsavedChanges?.() || false;
+        return state;
+      })()
+    `);
+  });
+
+  ipcMain.handle('get-editor-content', async (event) => {
+    // Получить содержимое редактора из рендерера
+    return await event.sender.executeJavaScript(`
+      (function() {
+        const editorView = window.modules?.editor?.getEditorView?.();
+        return editorView ? editorView.state.doc.toString() : '';
+      })()
+    `);
+  });
+
+  ipcMain.handle('get-file-info', async (event) => {
+    // Получить информацию о файле для предложения имени
+    return await event.sender.executeJavaScript(`
+      (function() {
+        const state = window.modules?.state;
+        return {
+          currentFileName: state?.getCurrentFileName?.() || 'Новый документ',
+          isFileLoadedFromDisk: state?.isFileLoadedFromDisk?.() || false
+        };
+      })()
+    `);
+  });
+
   console.log('[IPC] registerIpcHandlers: Все обработчики зарегистрированы.');
 }

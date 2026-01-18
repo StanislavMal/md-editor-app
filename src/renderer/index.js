@@ -8,10 +8,18 @@ import './styles/style.css';
 console.log('[Renderer] renderer.js: Скрипт начал выполняться.');
 
 // Добавляем функции в глобальный window для доступа из main process
-import { hasUnsavedChanges } from './modules/state.js';
+import { hasUnsavedChanges, getCurrentFileName, isFileLoadedFromDisk } from './modules/state.js';
 import { handleQuickSave } from './modules/file-io.js';
+import { getEditorView } from './modules/editor.js';
+
 window.hasUnsavedChanges = hasUnsavedChanges;
 window.handleQuickSave = handleQuickSave;
+
+// Добавляем модули в глобальный объект для доступа из main process
+window.modules = {
+  state: { hasUnsavedChanges, getCurrentFileName, isFileLoadedFromDisk },
+  editor: { getEditorView }
+};
 
 import { initializeEditor, setOnScrollCallback as setEditorScrollCallback, scrollToText as scrollToEditor } from './modules/editor.js';
 import { scheduleUpdate, setOnScrollCallback as setPreviewScrollCallback, scrollToText as scrollToPreview } from './modules/preview.js';
