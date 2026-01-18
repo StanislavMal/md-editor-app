@@ -6,7 +6,7 @@
   left: 0;
   width: 100%;
   height: var(--toolbar-height);
-  background: var(--color-canvas);
+  background: var(--color-toolbar-bg);
   border-bottom: 1px solid var(--color-border-muted);
   display: flex;
   align-items: center;

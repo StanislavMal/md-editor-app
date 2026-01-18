@@ -15,9 +15,10 @@
   --color-danger: #cf222e;
   
   /* Нейтральные цвета - LIGHT */
-  --color-canvas: #ffffff;
+  --color-canvas: #fafbfc;
   --color-canvas-subtle: #C0C0C0;
   --color-canvas-inset: #f3f4f6;
+  --color-toolbar-bg: #f6f8fa;
   --color-border-default: #d0d7de;
   --color-border-muted: #e5e7eb;
   --color-fg-default: #1f2328;
@@ -71,6 +72,7 @@
   --color-canvas: #0d1117;
   --color-canvas-subtle: #010409;
   --color-canvas-inset: #1c2128;
+  --color-toolbar-bg: #161b22;
   --color-border-default: #30363d;
   --color-border-muted: #21262d;
   --color-fg-default: #e6edf3;
