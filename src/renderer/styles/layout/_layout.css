@@ -30,36 +30,6 @@
   user-select: none;
 }
 
-.title-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  height: 100%;
-  -webkit-app-region: no-drag;
-}
-
-.title-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 20px;
-  border: none;
-  background: transparent;
-  color: var(--color-fg-default);
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
-  border-radius: var(--border-radius);
-}
-
-.title-action-btn:hover {
-  background: var(--color-canvas-subtle);
-}
-
-.title-action-btn:active {
-  background: var(--color-border-muted);
-}
-
 .title-bar-buttons {
   display: flex;
   align-items: center;
