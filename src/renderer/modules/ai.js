@@ -39,6 +39,20 @@ export function getAISettingsPublic() {
   return getAISettings();
 }
 
+// Очистка текста от обертки ```markdown ```
+function cleanMarkdownWrapper(text) {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('```markdown') && trimmed.endsWith('```')) {
+    // Удаляем начальный ```markdown и конечный ```
+    let cleaned = trimmed.slice('```markdown'.length);
+    if (cleaned.startsWith('\n')) cleaned = cleaned.slice(1);
+    if (cleaned.endsWith('\n```')) cleaned = cleaned.slice(0, -4);
+    else if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+    return cleaned.trim();
+  }
+  return text;
+}
+
 // Разделение текста на логические части
 function splitTextIntoChunks(text, maxLength = 4000) {
   if (text.length <= maxLength) {
@@ -71,7 +85,7 @@ async function callDeepSeekAPI(text, apiKey) {
     model: API_CONFIG.deepseek.model,
     messages: [{
       role: 'user',
-      content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+      content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
     }],
     max_tokens: API_CONFIG.deepseek.maxTokens,
     temperature: 0.3
@@ -82,7 +96,7 @@ async function callDeepSeekAPI(text, apiKey) {
     }
   });
 
-  return response.data.choices[0].message.content;
+  return cleanMarkdownWrapper(response.data.choices[0].message.content);
 }
 
 // Вызов Gemini API
@@ -91,7 +105,7 @@ async function callGeminiAPI(text, apiKey) {
     model: API_CONFIG.gemini.model,
     messages: [{
       role: 'user',
-      content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+      content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
     }],
     max_tokens: API_CONFIG.gemini.maxTokens,
     temperature: 0.3
@@ -102,7 +116,7 @@ async function callGeminiAPI(text, apiKey) {
     }
   });
 
-  return response.data.choices[0].message.content;
+  return cleanMarkdownWrapper(response.data.choices[0].message.content);
 }
 
 // Streaming DeepSeek API
@@ -119,7 +133,7 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
         model: API_CONFIG.deepseek.model,
         messages: [{
           role: 'user',
-          content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+          content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. НЕ оборачивай результат в тройные обратные кавычки или блоки кода. Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
         }],
         max_tokens: API_CONFIG.deepseek.maxTokens,
         temperature: 0.3,
@@ -139,7 +153,7 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
       const { done, value } = await reader.read();
 
       if (done) {
-        onComplete(accumulatedText);
+        onComplete(cleanMarkdownWrapper(accumulatedText));
         break;
       }
 
@@ -151,7 +165,7 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
           const jsonStr = line.slice(6);
 
           if (jsonStr === '[DONE]') {
-            onComplete(accumulatedText);
+            onComplete(cleanMarkdownWrapper(accumulatedText));
             return;
           }
 
@@ -207,7 +221,7 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
       const { done, value } = await reader.read();
 
       if (done) {
-        onComplete(accumulatedText);
+        onComplete(cleanMarkdownWrapper(accumulatedText));
         break;
       }
 
@@ -219,7 +233,7 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
           const jsonStr = line.slice(6);
 
           if (jsonStr === '[DONE]') {
-            onComplete(accumulatedText);
+            onComplete(cleanMarkdownWrapper(accumulatedText));
             return;
           }
 
