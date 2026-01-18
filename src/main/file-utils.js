@@ -479,7 +479,7 @@ export async function buildFullHTML(htmlContent, githubCss, printCss, highlightC
       </style>
     </head>
     <body>
-      <article class="markdown-body">
+      <article class="markdown-body mathjax-preview">
         ${htmlContent}
       </article>
     </body>

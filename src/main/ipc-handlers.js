@@ -157,7 +157,23 @@ export function registerIpcHandlers(mainWindow) {
       const mathJaxCss = await getMathJaxChtmlCSS();
 
       let pdfReadyHtml = await convertImagesToBase64(singleHtmlString, net);
-      const fullHtml = await buildFullHTML(pdfReadyHtml, githubCss, printCss, highlightCss, mathJaxCss);
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            ${githubCss}
+            ${printCss}
+            ${highlightCss}
+            ${mathJaxCss}
+          </style>
+        </head>
+        <body>
+          ${pdfReadyHtml}
+        </body>
+        </html>
+      `;
 
       const printWindow = new BrowserWindow({
         show: false,
@@ -175,7 +191,7 @@ export function registerIpcHandlers(mainWindow) {
         await fs.unlink(tempHtmlPath).catch(err => console.error("Не удалось удалить временный HTML:", err));
       }
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       const pdfData = await printWindow.webContents.printToPDF({
         printBackground: true,
