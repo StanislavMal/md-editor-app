@@ -4,7 +4,7 @@ console.log('[Module Loaded] toolbar.js');
 import { applyMarkdown, insertLineBreak, getEditorView } from './editor.js';
 import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.js';
 import { handleQuickSave } from './file-io.js';
-import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection } from './ai.js';
+import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection, getAvailableModels } from './ai.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -177,6 +177,25 @@ function stopGeneration() {
 }
 
 /**
+ * Создает HTML для селектора модели
+ */
+function createModelSelectorHTML(provider, selectedModel) {
+  const models = getAvailableModels(provider);
+  const options = models.map(model =>
+    `<option value="${model.id}" ${selectedModel === model.id ? 'selected' : ''}>${model.name}</option>`
+  ).join('');
+
+  return `
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 4px; font-weight: 500;">Модель:</label>
+      <select id="ai-model" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: var(--bg-color, white); color: var(--text-color, black);">
+        ${options}
+      </select>
+    </div>
+  `;
+}
+
+/**
  * Показывает диалог настроек AI
  */
 function showAISettings() {
@@ -221,6 +240,8 @@ function showAISettings() {
       </select>
     </div>
 
+    ${createModelSelectorHTML(settings.provider, settings.model)}
+
     <div id="deepseek-settings" style="margin-bottom: 16px; ${settings.provider === 'deepseek' ? '' : 'display: none;'}">
       <label style="display: block; margin-bottom: 4px; font-weight: 500;">DeepSeek API Key:</label>
       <input type="password" id="deepseek-key" value="${settings.deepseekKey}" placeholder="sk-..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: var(--bg-color, white); color: var(--text-color, black);">
@@ -251,25 +272,43 @@ function showAISettings() {
 
   // Обработчики событий
   const providerSelect = modalContent.querySelector('#ai-provider');
+  const modelSelect = modalContent.querySelector('#ai-model');
   const deepseekSettings = modalContent.querySelector('#deepseek-settings');
   const geminiSettings = modalContent.querySelector('#gemini-settings');
   const groqSettings = modalContent.querySelector('#groq-settings');
+
+  const updateModelSelector = () => {
+    const provider = providerSelect.value;
+    const models = getAvailableModels(provider);
+    const currentModel = modelSelect.value;
+
+    // Проверяем, доступна ли текущая модель для нового провайдера
+    const modelExists = models.some(m => m.id === currentModel);
+    const defaultModel = models[0]?.id || '';
+
+    modelSelect.innerHTML = models.map(model =>
+      `<option value="${model.id}" ${(!modelExists && model.id === defaultModel) || (modelExists && currentModel === model.id) ? 'selected' : ''}>${model.name}</option>`
+    ).join('');
+  };
 
   providerSelect.addEventListener('change', () => {
     const provider = providerSelect.value;
     deepseekSettings.style.display = provider === 'deepseek' ? 'block' : 'none';
     geminiSettings.style.display = provider === 'gemini' ? 'block' : 'none';
     groqSettings.style.display = provider === 'groq' ? 'block' : 'none';
+    updateModelSelector();
   });
 
   modalContent.querySelector('#save-settings').addEventListener('click', () => {
     const provider = providerSelect.value;
+    const model = modelSelect.value;
     const deepseekKey = modalContent.querySelector('#deepseek-key').value;
     const geminiKey = modalContent.querySelector('#gemini-key').value;
     const groqKey = modalContent.querySelector('#groq-key').value;
 
     saveAISettings({
       provider,
+      model,
       deepseekKey,
       geminiKey,
       groqKey

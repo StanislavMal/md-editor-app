@@ -9,34 +9,40 @@ console.log('[Module Loaded] ai.js');
 const API_CONFIG = {
   deepseek: {
     baseURL: 'https://api.deepseek.com/v1',
-    //model: 'deepseek-reasoner',
-    //maxTokens: 64000,
-    model: 'deepseek-chat',
-    maxTokens: 8000,
+    models: [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', maxTokens: 8000 },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', maxTokens: 64000 }
+    ],
+    defaultModel: 'deepseek-chat'
   },
   gemini: {
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    model: 'gemini-3-flash-preview',
-    maxTokens: 80000
+    models: [
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', maxTokens: 80000 }
+    ],
+    defaultModel: 'gemini-3-flash-preview'
   },
   groq: {
-    //model: 'llama-3.3-70b-versatile',
-    //maxTokens: 32768,
-    //model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
-    //maxTokens: 8192,   
-    //model: 'openai/gpt-oss-120b',
-    model: 'groq/compound',
-    maxTokens: 8192,
-    //model: 'groq/compound-mini',
-    //maxTokens: 8192,
-    //model: 'llama-3.1-8b-instant',
+    models: [
+      { id: 'groq/compound', name: 'Groq Compound', maxTokens: 8192 },
+      { id: 'llama-3.3-70b-versatile', name: 'LLaMA 3.3 70B Versatile', maxTokens: 32768 },
+      { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'LLaMA 4 Maverick 17B', maxTokens: 8192 },
+      { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', maxTokens: 8192 },
+      { id: 'groq/compound-mini', name: 'Groq Compound Mini', maxTokens: 8192 },
+      { id: 'llama-3.1-8b-instant', name: 'LLaMA 3.1 8B Instant', maxTokens: 8192 }
+    ],
+    defaultModel: 'groq/compound'
   }
 };
 
 // Получение настроек из localStorage
 function getAISettings() {
+  const provider = localStorage.getItem('ai-provider') || 'deepseek';
+  const model = localStorage.getItem(`ai-model-${provider}`) || API_CONFIG[provider].defaultModel;
+
   return {
-    provider: localStorage.getItem('ai-provider') || 'deepseek',
+    provider,
+    model,
     deepseekKey: localStorage.getItem('deepseek-api-key') || '',
     geminiKey: localStorage.getItem('gemini-api-key') || '',
     groqKey: localStorage.getItem('groq-api-key') || ''
@@ -46,6 +52,7 @@ function getAISettings() {
 // Сохранение настроек
 export function saveAISettings(settings) {
   if (settings.provider) localStorage.setItem('ai-provider', settings.provider);
+  if (settings.model) localStorage.setItem(`ai-model-${settings.provider}`, settings.model);
   if (settings.deepseekKey !== undefined) localStorage.setItem('deepseek-api-key', settings.deepseekKey);
   if (settings.geminiKey !== undefined) localStorage.setItem('gemini-api-key', settings.geminiKey);
   if (settings.groqKey !== undefined) localStorage.setItem('groq-api-key', settings.groqKey);
@@ -54,6 +61,17 @@ export function saveAISettings(settings) {
 // Получение настроек
 export function getAISettingsPublic() {
   return getAISettings();
+}
+
+// Получение доступных моделей для провайдера
+export function getAvailableModels(provider) {
+  return API_CONFIG[provider]?.models || [];
+}
+
+// Получение конфигурации выбранной модели
+function getModelConfig(provider, modelId) {
+  const models = API_CONFIG[provider]?.models || [];
+  return models.find(m => m.id === modelId) || models[0];
 }
 
 // Очистка текста от обертки ```markdown ```
@@ -97,14 +115,14 @@ function splitTextIntoChunks(text, maxLength = 4000) {
 }
 
 // Вызов DeepSeek API
-async function callDeepSeekAPI(text, apiKey) {
+async function callDeepSeekAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
-    model: API_CONFIG.deepseek.model,
+    model: modelConfig.id,
     messages: [{
       role: 'user',
     content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$ или \\(...\\), блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление:\n\n${text}`
     }],
-    max_tokens: API_CONFIG.deepseek.maxTokens,
+    max_tokens: modelConfig.maxTokens,
     temperature: 0.3
   }, {
     headers: {
@@ -117,14 +135,14 @@ async function callDeepSeekAPI(text, apiKey) {
 }
 
 // Вызов Gemini API
-async function callGeminiAPI(text, apiKey) {
+async function callGeminiAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
-    model: API_CONFIG.gemini.model,
+    model: modelConfig.id,
     messages: [{
       role: 'user',
       content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
     }],
-    max_tokens: API_CONFIG.gemini.maxTokens,
+    max_tokens: modelConfig.maxTokens,
     temperature: 0.1
   }, {
     headers: {
@@ -137,20 +155,20 @@ async function callGeminiAPI(text, apiKey) {
 }
 
 // Вызов Groq API
-async function callGroqAPI(text, apiKey) {
+async function callGroqAPI(text, apiKey, modelConfig) {
   const groq = new Groq({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true,
   });
 
   const completion = await groq.chat.completions.create({
-    model: API_CONFIG.groq.model,
+    model: modelConfig.id,
     messages: [{
       role: 'user',
       content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
     }],
     temperature: 1,
-    max_tokens: API_CONFIG.groq.maxTokens,
+    max_tokens: modelConfig.maxTokens,
     top_p: 1,
     stream: false,
     stop: null
@@ -160,7 +178,7 @@ async function callGroqAPI(text, apiKey) {
 }
 
 // Streaming DeepSeek API
-async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
+async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
     const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
@@ -170,12 +188,12 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: API_CONFIG.deepseek.model,
+        model: modelConfig.id,
         messages: [{
           role: 'user',
         content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$[образец:"$$\Longleftrightarrow\; 4n^{2}+11n+6=4n^{2}+11n+6.$$"]. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
         }],
-        max_tokens: API_CONFIG.deepseek.maxTokens,
+        max_tokens: modelConfig.maxTokens,
         temperature: 0.3,
         stream: true
       })
@@ -228,7 +246,7 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
 }
 
 // Streaming Gemini API
-async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
+async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
     const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
@@ -238,12 +256,12 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: API_CONFIG.gemini.model,
+        model: modelConfig.id,
         messages: [{
           role: 'user',
           content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$ или \\(...\\), блочные в $$...$$ или \\[...\\]. НЕ оборачивай результат в тройные обратные кавычки или блоки кода. Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
         }],
-        max_tokens: API_CONFIG.gemini.maxTokens,
+        max_tokens: modelConfig.maxTokens,
         temperature: 0.3,
         stream: true
       })
@@ -296,7 +314,7 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
 }
 
 // Streaming Groq API
-async function streamGroqAPI(text, apiKey, onChunk, onComplete, onError) {
+async function streamGroqAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     const groq = new Groq({
       apiKey: apiKey,
@@ -304,13 +322,13 @@ async function streamGroqAPI(text, apiKey, onChunk, onComplete, onError) {
     });
 
     const stream = await groq.chat.completions.create({
-      model: API_CONFIG.groq.model,
+      model: modelConfig.id,
       messages: [{
         role: 'user',
-        content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$ или \\(...\\), блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление:\n\n${text}`
+        content: `Роль: ИИ Оформитель в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление. Текст для оформления:\n\n${text}`
       }],
       temperature: 1,
-      max_tokens: API_CONFIG.groq.maxTokens,
+      max_tokens: modelConfig.maxTokens,
       top_p: 1,
       stream: true,
       stop: null
@@ -346,6 +364,8 @@ export async function formatTextWithAI(text) {
     throw new Error(`API ключ для ${settings.provider} не настроен. Добавьте ключ в настройках.`);
   }
 
+  const modelConfig = getModelConfig(settings.provider, settings.model);
+
   try {
     const chunks = splitTextIntoChunks(text);
     const results = [];
@@ -353,11 +373,11 @@ export async function formatTextWithAI(text) {
     for (const chunk of chunks) {
       let formattedChunk;
       if (settings.provider === 'deepseek') {
-        formattedChunk = await callDeepSeekAPI(chunk, apiKey);
+        formattedChunk = await callDeepSeekAPI(chunk, apiKey, modelConfig);
       } else if (settings.provider === 'gemini') {
-        formattedChunk = await callGeminiAPI(chunk, apiKey);
+        formattedChunk = await callGeminiAPI(chunk, apiKey, modelConfig);
       } else {
-        formattedChunk = await callGroqAPI(chunk, apiKey);
+        formattedChunk = await callGroqAPI(chunk, apiKey, modelConfig);
       }
       results.push(formattedChunk);
     }
@@ -402,17 +422,19 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
     return;
   }
 
+  const modelConfig = getModelConfig(settings.provider, settings.model);
+
   try {
     const chunks = splitTextIntoChunks(text);
 
     if (chunks.length === 1) {
       // Для одного чанка используем streaming
       if (settings.provider === 'deepseek') {
-        await streamDeepSeekAPI(chunks[0], apiKey, onChunk, onComplete, onError);
+        await streamDeepSeekAPI(chunks[0], apiKey, onChunk, onComplete, onError, modelConfig);
       } else if (settings.provider === 'gemini') {
-        await streamGeminiAPI(chunks[0], apiKey, onChunk, onComplete, onError);
+        await streamGeminiAPI(chunks[0], apiKey, onChunk, onComplete, onError, modelConfig);
       } else {
-        await streamGroqAPI(chunks[0], apiKey, onChunk, onComplete, onError);
+        await streamGroqAPI(chunks[0], apiKey, onChunk, onComplete, onError, modelConfig);
       }
     } else {
       // Для нескольких чанков обрабатываем последовательно, но без streaming
@@ -421,11 +443,11 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
         const chunk = chunks[i];
         let formattedChunk;
         if (settings.provider === 'deepseek') {
-          formattedChunk = await callDeepSeekAPI(chunk, apiKey);
+          formattedChunk = await callDeepSeekAPI(chunk, apiKey, modelConfig);
         } else if (settings.provider === 'gemini') {
-          formattedChunk = await callGeminiAPI(chunk, apiKey);
+          formattedChunk = await callGeminiAPI(chunk, apiKey, modelConfig);
         } else {
-          formattedChunk = await callGroqAPI(chunk, apiKey);
+          formattedChunk = await callGroqAPI(chunk, apiKey, modelConfig);
         }
         results.push(formattedChunk);
 
@@ -457,13 +479,15 @@ export async function testAPIConnection(provider) {
     return { success: false, error: 'API ключ не настроен' };
   }
 
+  const modelConfig = getModelConfig(provider, settings.model);
+
   try {
     if (provider === 'deepseek') {
-      await callDeepSeekAPI('Тестовое сообщение', apiKey);
+      await callDeepSeekAPI('Тестовое сообщение', apiKey, modelConfig);
     } else if (provider === 'gemini') {
-      await callGeminiAPI('Тестовое сообщение', apiKey);
+      await callGeminiAPI('Тестовое сообщение', apiKey, modelConfig);
     } else {
-      await callGroqAPI('Тестовое сообщение', apiKey);
+      await callGroqAPI('Тестовое сообщение', apiKey, modelConfig);
     }
     return { success: true };
   } catch (error) {
