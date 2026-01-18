@@ -89,10 +89,14 @@ export async function getHighlightCSS() {
   }
 }
 
-export async function getMathJaxSvgCSS() {
-  // Полностью убраны дополнительные CSS для MathJax SVG
-  // MathJax в PDF будет использовать только встроенные стили SVG
-  return '';
+export async function getMathJaxCss(net) {
+  try {
+    const response = await net.fetch('https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml.css');
+    return await response.text();
+  } catch (error) {
+    console.error("Не удалось загрузить MathJax CHTML CSS:", error);
+    return '';
+  }
 }
 
 export async function buildFullHTML(htmlContent, githubCss, printCss, highlightCss, mathJaxCss) {
