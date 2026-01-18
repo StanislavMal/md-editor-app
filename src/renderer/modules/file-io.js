@@ -155,9 +155,14 @@ async function handleSavePdf() {
   }
 
   setButtonLoading(savePdfBtn, true, 'Экспорт...');
-  
+
   try {
-    const suggestedName = getCurrentFileName();
+    let suggestedName = null;
+    if (isFileLoadedFromDisk()) {
+      suggestedName = getCurrentFileName();
+    } else {
+      suggestedName = 'Новый документ';
+    }
     const result = await window.electronAPI.savePdf(pagesHtml, suggestedName);
     if (result.success) {
       alert(`PDF успешно сохранен в: ${result.filePath}`);
