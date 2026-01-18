@@ -217,6 +217,7 @@ function showAISettings() {
       <select id="ai-provider" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: var(--bg-color, white); color: var(--text-color, black);">
         <option value="deepseek" ${settings.provider === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
         <option value="gemini" ${settings.provider === 'gemini' ? 'selected' : ''}>Gemini</option>
+        <option value="groq" ${settings.provider === 'groq' ? 'selected' : ''}>Groq</option>
       </select>
     </div>
 
@@ -230,6 +231,12 @@ function showAISettings() {
       <label style="display: block; margin-bottom: 4px; font-weight: 500;">Gemini API Key:</label>
       <input type="password" id="gemini-key" value="${settings.geminiKey}" placeholder="AIza..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: var(--bg-color, white); color: var(--text-color, black);">
       <small style="color: #666; font-size: 12px;">Получить ключ: <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: #007bff;">makersuite.google.com</a></small>
+    </div>
+
+    <div id="groq-settings" style="margin-bottom: 16px; ${settings.provider === 'groq' ? '' : 'display: none;'}">
+      <label style="display: block; margin-bottom: 4px; font-weight: 500;">Groq API Key:</label>
+      <input type="password" id="groq-key" value="${settings.groqKey}" placeholder="gsk-..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: var(--bg-color, white); color: var(--text-color, black);">
+      <small style="color: #666; font-size: 12px;">Получить ключ: <a href="https://console.groq.com/keys" target="_blank" style="color: #007bff;">console.groq.com</a></small>
     </div>
 
     <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
@@ -246,26 +253,26 @@ function showAISettings() {
   const providerSelect = modalContent.querySelector('#ai-provider');
   const deepseekSettings = modalContent.querySelector('#deepseek-settings');
   const geminiSettings = modalContent.querySelector('#gemini-settings');
+  const groqSettings = modalContent.querySelector('#groq-settings');
 
   providerSelect.addEventListener('change', () => {
-    if (providerSelect.value === 'deepseek') {
-      deepseekSettings.style.display = 'block';
-      geminiSettings.style.display = 'none';
-    } else {
-      deepseekSettings.style.display = 'none';
-      geminiSettings.style.display = 'block';
-    }
+    const provider = providerSelect.value;
+    deepseekSettings.style.display = provider === 'deepseek' ? 'block' : 'none';
+    geminiSettings.style.display = provider === 'gemini' ? 'block' : 'none';
+    groqSettings.style.display = provider === 'groq' ? 'block' : 'none';
   });
 
   modalContent.querySelector('#save-settings').addEventListener('click', () => {
     const provider = providerSelect.value;
     const deepseekKey = modalContent.querySelector('#deepseek-key').value;
     const geminiKey = modalContent.querySelector('#gemini-key').value;
+    const groqKey = modalContent.querySelector('#groq-key').value;
 
     saveAISettings({
       provider,
       deepseekKey,
-      geminiKey
+      geminiKey,
+      groqKey
     });
 
     document.body.removeChild(modal);
