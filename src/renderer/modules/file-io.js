@@ -2,7 +2,7 @@
 console.log('[Module Loaded] file-io.js');
 
 import { resetPreviewState, scheduleUpdate, getPreviewHtmlContent } from './preview.js';
-import { setCurrentFile } from './state.js';
+import { setCurrentFile, getCurrentFileName } from './state.js';
 
 let editorView;
 
@@ -25,7 +25,9 @@ async function handleOpenFile() {
   const openBtn = document.getElementById('open-btn');
   try {
     const result = await window.electronAPI.openFile();
+    console.log('[FileIO] handleOpenFile: result =', result);
     if (result && result.content !== undefined) {
+      console.log('[FileIO] handleOpenFile: result.filePath =', result.filePath);
       setButtonLoading(openBtn, true, 'Загрузка...');
       await loadFileContent(result.content, result.filePath);
       setButtonLoading(openBtn, false, 'Открыть');
@@ -44,16 +46,17 @@ async function handleOpenFile() {
  */
 async function loadFileContent(content, filePath) {
   if (!editorView) return;
-  
+
+  console.log('[FileIO] loadFileContent: устанавливаем currentFilePath =', filePath);
   setCurrentFile(filePath);
   resetPreviewState();
-  
+
   editorView.dispatch({
     changes: { from: 0, to: editorView.state.doc.length, insert: content },
     selection: { anchor: 0 } // Сбросить курсор в начало
   });
   editorView.focus();
-  
+
   // Даем DOM время на обновление перед первым рендерингом
   await new Promise(resolve => setTimeout(resolve, 50));
   scheduleUpdate(content);
@@ -73,8 +76,11 @@ async function handleSaveMd() {
   setButtonLoading(saveMdBtn, true, 'Сохранение...');
   
   try {
-    const result = await window.electronAPI.saveMdFile(content);
+    const suggestedName = getCurrentFileName();
+    console.log('[FileIO] handleSaveMd: suggestedName =', suggestedName);
+    const result = await window.electronAPI.saveMdFile(content, suggestedName);
     if (result.success) {
+      setCurrentFile(result.filePath); // Обновляем текущий файл после сохранения
       alert(`Файл успешно сохранен в: ${result.filePath}`);
     } else if (result.error) {
       alert(`Ошибка сохранения: ${result.error}`);
@@ -100,7 +106,8 @@ async function handleSavePdf() {
   setButtonLoading(savePdfBtn, true, 'Экспорт...');
   
   try {
-    const result = await window.electronAPI.savePdf(pagesHtml);
+    const suggestedName = getCurrentFileName();
+    const result = await window.electronAPI.savePdf(pagesHtml, suggestedName);
     if (result.success) {
       alert(`PDF успешно сохранен в: ${result.filePath}`);
     } else if (result.error) {

@@ -101,6 +101,7 @@ export function initializeEditor(onUpdate) {
         { key: 'Ctrl-k', run: (view) => applyMarkdown('link', view) },
         { key: 'Ctrl-g', run: (view) => applyMarkdown('image', view) },
         { key: 'Ctrl-t', run: (view) => applyMarkdown('table', view) },
+        { key: 'Ctrl-Shift-l', run: (view) => applyMarkdown('tasklist', view) },
       ]),
       placeholderField,
       EditorView.updateListener.of((update) => {
@@ -162,17 +163,19 @@ export function applyMarkdown(type, view = editorView) {
     const { state, dispatch } = view;
 
     // --- НОВАЯ ЛОГИКА ДЛЯ СПИСКОВ И ЦИТАТ ---
-    if (['ul', 'ol', 'quote'].includes(type)) {
+    if (['ul', 'ol', 'quote', 'tasklist'].includes(type)) {
         const changes = [];
         const prefixes = {
             ul: /^\s*([-*+])\s+/,
             ol: /^\s*(\d+\.)\s+/,
-            quote: /^\s*>\s?/
+            quote: /^\s*>\s?/,
+            tasklist: /^\s*-\s+\[[\sx]\]\s+/
         };
         const newPrefixes = {
             ul: '- ',
             ol: '1. ',
-            quote: '> '
+            quote: '> ',
+            tasklist: '- [ ] '
         };
 
         const { from, to } = state.selection.main;

@@ -20,6 +20,7 @@ export function initializeToolbar(editorView) {
   document.getElementById('btn-link').addEventListener('click', () => applyMarkdown('link', editorView));
   document.getElementById('btn-image').addEventListener('click', () => applyMarkdown('image', editorView));
   document.getElementById('btn-table').addEventListener('click', () => applyMarkdown('table', editorView));
+  document.getElementById('btn-tasklist').addEventListener('click', () => applyMarkdown('tasklist', editorView));
   document.getElementById('btn-linebreak').addEventListener('click', () => insertLineBreak(editorView));
 
   // --- Кнопки управления видом ---

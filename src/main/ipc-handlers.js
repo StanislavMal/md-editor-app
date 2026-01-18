@@ -7,6 +7,7 @@ import fsSync from 'fs';
 import os from 'os';
 import MarkdownIt from 'markdown-it';
 import markdownItAttrs from 'markdown-it-attrs';
+import markdownItTaskLists from 'markdown-it-task-lists';
 import hljs from 'highlight.js';
 import {
   convertImagesToBase64,
@@ -20,7 +21,7 @@ const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
-}).use(markdownItAttrs);
+}).use(markdownItAttrs).use(markdownItTaskLists);
 
 const defaultImageRule = md.renderer.rules.image;
 md.renderer.rules.image = function(tokens, idx, options, env, self) {
@@ -135,11 +136,12 @@ function addLineNumberAttributes(md) {
 addLineNumberAttributes(md);
 
 export function registerIpcHandlers(mainWindow) {
-  ipcMain.handle('save-pdf', async (event, singleHtmlString) => {
+  ipcMain.handle('save-pdf', async (event, singleHtmlString, suggestedName) => {
     console.log('[IPC] Получен вызов: save-pdf');
+    const defaultName = suggestedName ? `${suggestedName}.pdf` : 'document.pdf';
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Сохранить как PDF',
-      defaultPath: 'document.pdf',
+      defaultPath: defaultName,
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     });
 
@@ -242,11 +244,13 @@ export function registerIpcHandlers(mainWindow) {
     return null;
   });
 
-  ipcMain.handle('save-md-file', async (event, content) => {
-    console.log('[IPC] Получен вызов: save-md-file');
+  ipcMain.handle('save-md-file', async (event, content, suggestedName) => {
+    console.log('[IPC] Получен вызов: save-md-file, suggestedName =', suggestedName);
+    const defaultName = suggestedName ? `${suggestedName}.md` : 'document.md';
+    console.log('[IPC] save-md-file: defaultName =', defaultName);
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Сохранить Markdown файл',
-      defaultPath: 'document.md',
+      defaultPath: defaultName,
       filters: [{ name: 'Markdown Files', extensions: ['md'] }],
     });
     if (canceled || !filePath) return { success: false };

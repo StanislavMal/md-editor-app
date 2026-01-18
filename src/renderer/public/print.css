@@ -132,3 +132,41 @@
   overflow-wrap: break-word;
   word-break: break-all;
 }
+
+/* Стили для task lists (чекбоксов) */
+.markdown-body input[type="checkbox"] {
+  margin: 0 0.2em 0.25em -1.6em;
+  vertical-align: middle;
+}
+
+.markdown-body li:has(input[type="checkbox"]) {
+  list-style: none;
+}
+
+.markdown-body li:has(input[type="checkbox"])::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5em;
+  border: 1px solid #d0d7de;
+  border-radius: 3px;
+  background-color: #ffffff;
+  vertical-align: middle;
+}
+
+.markdown-body li:has(input[type="checkbox"]:checked)::before {
+  background-color: #0969da;
+  border-color: #0969da;
+}
+
+.markdown-body li:has(input[type="checkbox"]:checked)::after {
+  content: "✓";
+  display: inline-block;
+  position: absolute;
+  margin-left: -1.1em;
+  margin-top: 0.1em;
+  color: #ffffff;
+  font-size: 0.8em;
+  font-weight: bold;
+}

@@ -30,6 +30,13 @@ export function initializeState() {
 
   const savedTheme = localStorage.getItem('theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Загружаем сохраненный currentFilePath
+  const savedFilePath = localStorage.getItem('currentFilePath');
+  if (savedFilePath) {
+    state.currentFilePath = savedFilePath;
+    console.log('[State] Восстановлен currentFilePath из localStorage:', savedFilePath);
+  }
 }
 
 export function togglePreview(editorView) {
@@ -79,4 +86,22 @@ export function resetZoom() {
 
 export function setCurrentFile(filePath) {
     state.currentFilePath = filePath;
+    // Сохраняем в localStorage для persistence между перезапусками
+    if (filePath) {
+        localStorage.setItem('currentFilePath', filePath);
+    } else {
+        localStorage.removeItem('currentFilePath');
+    }
+}
+
+export function getCurrentFileName() {
+    if (!state.currentFilePath) {
+        console.log('[State] getCurrentFileName: currentFilePath не установлен');
+        return null;
+    }
+    // Извлекаем имя файла без расширения
+    const fileName = state.currentFilePath.split(/[/\\]/).pop();
+    const baseName = fileName.replace(/\.md$/i, '');
+    console.log(`[State] getCurrentFileName: возвращаем "${baseName}" из "${state.currentFilePath}"`);
+    return baseName;
 }
