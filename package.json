@@ -1,5 +1,5 @@
 {
-  "name": "md-editor-app",
+  "name": "md-to-pdf",
   "version": "1.1.0",
   "description": "Modular Markdown to PDF Editor with Live Preview",
   "main": "out/main/index.js",
