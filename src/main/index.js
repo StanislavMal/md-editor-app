@@ -4,12 +4,53 @@ import path from 'path'
 import isDev from 'electron-is-dev' // <-- ИМПОРТИРУЕМ ПАКЕТ
 import { registerIpcHandlers } from './ipc-handlers.js'
 
+let splashWindow;
+let mainWindow;
+
+function createSplashWindow() {
+  console.log('[Splash] Creating splash window');
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    alwaysOnTop: true,
+    center: true,
+    resizable: false,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+    },
+  });
+
+  if (isDev) {
+    console.log('[Splash] Loading splash from dev server');
+    splashWindow.loadURL('http://localhost:5173/splash.html');
+  } else {
+    console.log('[Splash] Loading splash from file');
+    splashWindow.loadFile(path.join(__dirname, '../renderer/splash.html'));
+  }
+
+  splashWindow.once('ready-to-show', () => {
+    console.log('[Splash] Showing splash');
+    splashWindow.show();
+    // Показывать splash минимум 3 секунды
+    setTimeout(() => {
+      console.log('[Splash] Timeout reached, destroying splash and showing main');
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.destroy();
+      }
+      mainWindow.show();
+    }, 3000);
+  });
+}
+
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     frame: false,
     icon: path.join(__dirname, '../../assets/icon.png'),
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       webSecurity: false,
@@ -122,8 +163,6 @@ function createWindow() {
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'undocked' });
   }
-
-
 }
 
 app.whenReady().then(() => {
@@ -132,8 +171,9 @@ app.whenReady().then(() => {
     callback({ path: path.normalize(decodeURI(url)) });
   });
 
+  createSplashWindow();
   createWindow();
-  
+
   registerIpcHandlers();
 });
 
@@ -143,6 +183,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
+    createSplashWindow();
     createWindow();
   }
 });
