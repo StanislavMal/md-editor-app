@@ -3,7 +3,7 @@
 .container {
   display: flex;
   width: 100%;
-  height: calc(100vh - var(--toolbar-height));
+  height: calc(100vh / var(--zoom-scale) - var(--toolbar-height) / var(--zoom-scale));
 }
 
 /* Панель редактора */
