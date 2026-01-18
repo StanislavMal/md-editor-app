@@ -53,10 +53,12 @@
       "output": "dist"
     },
     "files": [
-      "out/**"
+      "out/**",
+      "assets/**"
     ],
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "assets/icon.png"
     }
   }
 }
