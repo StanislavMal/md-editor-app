@@ -23,6 +23,10 @@ body, html {
 
 body {
   counter-reset: page;
+  transform-origin: top left;
+  transform: scale(var(--zoom-scale));
+  width: calc(100% / var(--zoom-scale));
+  height: calc(100% / var(--zoom-scale));
 }
 
 /* ================================================================

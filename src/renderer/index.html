@@ -14,6 +14,16 @@
   <!-- ВЕРХНЯЯ ПАНЕЛЬ ИНСТРУМЕНТОВ -->
   <div class="toolbar">
     <div class="toolbar-section toolbar-left">
+      <!-- Открыть -->
+      <div class="toolbar-group">
+        <button id="open-btn" class="btn-secondary">
+          <svg class="icon icon-lg" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/></svg>
+          <span class="btn-text">Открыть</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
       <!-- Форматирование -->
       <div class="toolbar-group">
         <button id="btn-bold" class="btn-icon" title="Жирный (Ctrl+B)" aria-label="Жирный">
@@ -25,9 +35,9 @@
         <button id="btn-heading" class="btn-icon" title="Заголовок (Ctrl+H)" aria-label="Заголовок">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h2v5h6V2h2v12h-2V9H4v5H2V2zm10 10h2v2h-2v-2z"/></svg>
         </button>
-        
+
         <div class="toolbar-divider"></div>
-        
+
         <button id="btn-quote" class="btn-icon" title="Цитата (Ctrl+Q)" aria-label="Цитата">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h3v3H2V4zm0 5h3v3H2V9zm5-5h3v3H7V4z"/></svg>
         </button>
@@ -37,9 +47,9 @@
         <button id="btn-ol" class="btn-icon" title="Нумерованный список (Ctrl+O)" aria-label="Нумерованный список">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h1v2H2V2zm0 3h1v2H2V5zm0 3h1v2H2V8zm3-5h9v1H5V3zm0 4h9v1H5V7zm0 4h9v1H5v-1z"/></svg>
         </button>
-        
+
         <div class="toolbar-divider"></div>
-        
+
         <button id="btn-link" class="btn-icon" title="Ссылка (Ctrl+K)" aria-label="Ссылка">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"/></svg>
         </button>
@@ -58,16 +68,18 @@
       </div>
     </div>
 
-    <div class="toolbar-section toolbar-right">
+    <div class="toolbar-section toolbar-center">
+      <div class="app-title">Markdown Editor Pro</div>
+
       <!-- Вид -->
       <div class="toolbar-group">
         <button id="toggle-preview" class="btn-toggle active" title="Показать/скрыть превью (Ctrl+P)" aria-label="Переключить превью">
           <svg class="icon icon-lg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2zM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954-2.096-2.366 2.717zM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10z"/></svg>
           <span class="btn-text">Превью</span>
         </button>
-        
+
         <div class="toolbar-divider"></div>
-        
+
         <button id="zoom-out" class="btn-icon" title="Уменьшить масштаб" aria-label="Уменьшить">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 8h10v1H2V8z"/></svg>
         </button>
@@ -78,12 +90,10 @@
         <button id="zoom-reset" class="btn-icon" title="Сбросить масштаб" aria-label="Сбросить масштаб">
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/></svg>
         </button>
-      </div>
-      
-      <div class="toolbar-divider"></div>
-      
-      <!-- Переключатель темы -->
-      <div class="toolbar-group">
+
+        <div class="toolbar-divider"></div>
+
+        <!-- Переключатель темы -->
         <button id="theme-toggle" class="btn-icon" title="Переключить тему (Ctrl+Shift+D)" aria-label="Переключить тему">
           <svg class="icon icon-lg theme-icon-light" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
@@ -93,15 +103,11 @@
           </svg>
         </button>
       </div>
-      
-      <div class="toolbar-divider"></div>
-      
+    </div>
+
+    <div class="toolbar-section toolbar-right">
       <!-- Файлы -->
       <div class="toolbar-group">
-        <button id="open-btn" class="btn-primary">
-          <svg class="icon icon-lg" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/></svg>
-          <span class="btn-text">Открыть</span>
-        </button>
         <button id="quick-save-btn" class="btn-secondary" title="Быстрое сохранение (Ctrl+S)">
           <svg class="icon icon-lg" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>
           <span class="btn-text">Сохранить</span>
