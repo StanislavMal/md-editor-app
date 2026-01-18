@@ -108,27 +108,43 @@ async function callGeminiAPI(text, apiKey) {
 // Streaming DeepSeek API
 async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
   try {
-    const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
-      model: API_CONFIG.deepseek.model,
-      messages: [{
-        role: 'user',
-        content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
-      }],
-      max_tokens: API_CONFIG.deepseek.maxTokens,
-      temperature: 0.3,
-      stream: true
-    }, {
+    // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
+    const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      responseType: 'stream'
+      body: JSON.stringify({
+        model: API_CONFIG.deepseek.model,
+        messages: [{
+          role: 'user',
+          content: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+        }],
+        max_tokens: API_CONFIG.deepseek.maxTokens,
+        temperature: 0.3,
+        stream: true
+      })
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
     let accumulatedText = '';
 
-    response.data.on('data', (chunk) => {
-      const lines = chunk.toString().split('\n').filter(line => line.trim());
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        onComplete(accumulatedText);
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim());
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
@@ -151,41 +167,52 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError) {
           }
         }
       }
-    });
-
-    response.data.on('error', (error) => {
-      onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
-    });
-
+    }
   } catch (error) {
-    onError(error);
+    onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
   }
 }
 
 // Streaming Gemini API
 async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
   try {
-    const response = await axios.post(`${API_CONFIG.gemini.baseURL}/models/${API_CONFIG.gemini.model}:streamGenerateContent?key=${apiKey}`, {
-      contents: [{
-        parts: [{
-          text: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: API_CONFIG.gemini.maxTokens
-      }
-    }, {
+    // Используем fetch для streaming
+    const response = await fetch(`${API_CONFIG.gemini.baseURL}/models/${API_CONFIG.gemini.model}:streamGenerateContent?key=${apiKey}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      responseType: 'stream'
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Преобразуй следующий текст в корректный Markdown формат. Сделай его структурированным и читаемым:\n\n${text}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: API_CONFIG.gemini.maxTokens
+        }
+      })
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
     let accumulatedText = '';
 
-    response.data.on('data', (chunk) => {
-      const lines = chunk.toString().split('\n').filter(line => line.trim());
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        onComplete(accumulatedText);
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim());
 
       for (const line of lines) {
         try {
@@ -199,18 +226,9 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError) {
           // Игнорируем невалидный JSON
         }
       }
-    });
-
-    response.data.on('end', () => {
-      onComplete(accumulatedText);
-    });
-
-    response.data.on('error', (error) => {
-      onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
-    });
-
+    }
   } catch (error) {
-    onError(error);
+    onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
   }
 }
 
