@@ -75,7 +75,7 @@
 .container {
   display: flex;
   width: 100%;
-  height: calc(100vh / var(--zoom-scale) - (var(--toolbar-height) + var(--title-bar-height)) / var(--zoom-scale));
+  height: calc(100vh - var(--toolbar-height) - var(--title-bar-height));
 }
 
 /* Панель редактора */

@@ -77,8 +77,10 @@ export function toggleTheme() {
 
 export function setZoom(newZoom) {
   state.zoomLevel = Math.max(50, Math.min(200, newZoom));
-  // Применяем zoom ко всему интерфейсу через CSS переменную
-  document.documentElement.style.setProperty('--zoom-scale', state.zoomLevel / 100);
+  // Применяем zoom только к редактору и превью через CSS переменные
+  const scale = state.zoomLevel / 100;
+  state.ui.editorPane.style.setProperty('--zoom-scale', scale);
+  state.ui.previewPane.style.setProperty('--zoom-scale', scale);
   state.ui.zoomLevelIndicator.textContent = `${state.zoomLevel}%`;
   // Сохраняем в localStorage
   localStorage.setItem('zoomLevel', state.zoomLevel);
