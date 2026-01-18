@@ -263,5 +263,17 @@ export function registerIpcHandlers(mainWindow) {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle('quick-save-file', async (event, content, filePath) => {
+    console.log('[IPC] Получен вызов: quick-save-file, filePath =', filePath);
+    try {
+      await fs.writeFile(filePath, content, 'utf-8');
+      return { success: true, filePath };
+    } catch (error) {
+      console.error('Не удалось быстро сохранить файл:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   console.log('[IPC] registerIpcHandlers: Все обработчики зарегистрированы.');
 }

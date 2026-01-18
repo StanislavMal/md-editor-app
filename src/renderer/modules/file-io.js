@@ -2,7 +2,7 @@
 console.log('[Module Loaded] file-io.js');
 
 import { resetPreviewState, scheduleUpdate, getPreviewHtmlContent } from './preview.js';
-import { setCurrentFile, getCurrentFileName } from './state.js';
+import { setCurrentFile, getCurrentFileName, setUnsavedChanges, hasUnsavedChanges, getCurrentFilePath, setFileLoadedFromDisk, isFileLoadedFromDisk } from './state.js';
 
 let editorView;
 
@@ -14,6 +14,7 @@ export function initializeFileIO(cmInstance) {
   editorView = cmInstance;
 
   document.getElementById('open-btn').addEventListener('click', handleOpenFile);
+  document.getElementById('quick-save-btn').addEventListener('click', handleQuickSave);
   document.getElementById('save-md-btn').addEventListener('click', handleSaveMd);
   document.getElementById('save-pdf-btn').addEventListener('click', handleSavePdf);
 }
@@ -49,6 +50,7 @@ async function loadFileContent(content, filePath) {
 
   console.log('[FileIO] loadFileContent: устанавливаем currentFilePath =', filePath);
   setCurrentFile(filePath);
+  setFileLoadedFromDisk(true); // Помечаем, что файл был загружен с диска
   resetPreviewState();
 
   editorView.dispatch({
@@ -57,10 +59,52 @@ async function loadFileContent(content, filePath) {
   });
   editorView.focus();
 
+  // Сбрасываем флаг несохраненных изменений при загрузке файла
+  setUnsavedChanges(false);
+
   // Даем DOM время на обновление перед первым рендерингом
   await new Promise(resolve => setTimeout(resolve, 50));
   scheduleUpdate(content);
 }
+
+/**
+ * Обрабатывает быстрое сохранение (перезапись существующего файла или диалог).
+ */
+export async function handleQuickSave() {
+  const content = editorView.state.doc.toString();
+  if (!content.trim()) {
+    alert('Нечего сохранять');
+    return;
+  }
+
+  if (isFileLoadedFromDisk()) {
+    // Файл был открыт в этой сессии, пытаемся перезаписать
+    const currentFilePath = getCurrentFilePath();
+    const quickSaveBtn = document.getElementById('quick-save-btn');
+    setButtonLoading(quickSaveBtn, true, 'Сохранение...');
+
+    try {
+      // Используем IPC для перезаписи файла
+      const result = await window.electronAPI.quickSaveFile(content, currentFilePath);
+      if (result.success) {
+        setUnsavedChanges(false);
+        console.log(`Файл перезаписан: ${currentFilePath}`);
+      } else {
+        alert(`Ошибка сохранения: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка быстрого сохранения:', error);
+      alert('Ошибка сохранения файла');
+    } finally {
+      setButtonLoading(quickSaveBtn, false, 'Сохранить');
+    }
+  } else {
+    // Файл не был открыт в этой сессии, показываем диалог
+    await handleSaveMd();
+  }
+}
+
+
 
 /**
  * Обрабатывает сохранение в MD файл.
@@ -72,15 +116,22 @@ async function handleSaveMd() {
     alert('Нечего сохранять');
     return;
   }
-  
+
   setButtonLoading(saveMdBtn, true, 'Сохранение...');
-  
+
   try {
-    const suggestedName = getCurrentFileName();
+    let suggestedName = null;
+    if (isFileLoadedFromDisk()) {
+      suggestedName = getCurrentFileName();
+    } else {
+      suggestedName = 'Новый документ';
+    }
     console.log('[FileIO] handleSaveMd: suggestedName =', suggestedName);
     const result = await window.electronAPI.saveMdFile(content, suggestedName);
     if (result.success) {
       setCurrentFile(result.filePath); // Обновляем текущий файл после сохранения
+      setFileLoadedFromDisk(true); // Помечаем, что файл теперь сохранен
+      setUnsavedChanges(false); // Сбрасываем флаг несохраненных изменений
       alert(`Файл успешно сохранен в: ${result.filePath}`);
     } else if (result.error) {
       alert(`Ошибка сохранения: ${result.error}`);

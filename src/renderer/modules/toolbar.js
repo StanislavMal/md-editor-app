@@ -3,6 +3,7 @@ console.log('[Module Loaded] toolbar.js');
 
 import { applyMarkdown, insertLineBreak } from './editor.js';
 import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.js';
+import { handleQuickSave } from './file-io.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -41,6 +42,10 @@ export function initializeToolbar(editorView) {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
       e.preventDefault();
       toggleTheme();
+    }
+    if (e.ctrlKey && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      handleQuickSave();
     }
   });
 

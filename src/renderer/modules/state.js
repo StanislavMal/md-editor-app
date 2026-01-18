@@ -7,6 +7,8 @@ const state = {
   previewVisible: true,
   zoomLevel: 100,
   currentFilePath: null,
+  hasUnsavedChanges: false,
+  isFileLoadedFromDisk: false, // Флаг, был ли файл загружен с диска
   ui: {
     editorPane: null,
     previewPane: null,
@@ -94,6 +96,14 @@ export function setCurrentFile(filePath) {
     }
 }
 
+export function setFileLoadedFromDisk(loaded) {
+    state.isFileLoadedFromDisk = loaded;
+}
+
+export function isFileLoadedFromDisk() {
+    return state.isFileLoadedFromDisk;
+}
+
 export function getCurrentFileName() {
     if (!state.currentFilePath) {
         console.log('[State] getCurrentFileName: currentFilePath не установлен');
@@ -104,4 +114,23 @@ export function getCurrentFileName() {
     const baseName = fileName.replace(/\.md$/i, '');
     console.log(`[State] getCurrentFileName: возвращаем "${baseName}" из "${state.currentFilePath}"`);
     return baseName;
+}
+
+export function getCurrentFilePath() {
+    return state.currentFilePath;
+}
+
+export function setUnsavedChanges(hasChanges) {
+    state.hasUnsavedChanges = hasChanges;
+    updateWindowTitle();
+}
+
+export function hasUnsavedChanges() {
+    return state.hasUnsavedChanges;
+}
+
+function updateWindowTitle() {
+    const baseTitle = 'Markdown Editor Pro';
+    const title = state.hasUnsavedChanges ? `*${baseTitle}` : baseTitle;
+    document.title = title;
 }

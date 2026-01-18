@@ -17,6 +17,7 @@ import { css } from '@codemirror/lang-css';
 import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
 import { lightTheme, darkTheme } from './editor-theme.js';
+import { setUnsavedChanges } from './state.js';
 
 console.log('[Module Loaded] editor.js');
 
@@ -107,6 +108,8 @@ export function initializeEditor(onUpdate) {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
             onUpdate(update.state.doc.toString());
+            // Отмечаем, что есть несохраненные изменения
+            setUnsavedChanges(true);
         }
       }),
       EditorView.domEventHandlers({

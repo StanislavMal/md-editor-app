@@ -1,5 +1,5 @@
 // src/main/index.js
-import { app, BrowserWindow, protocol } from 'electron'
+import { app, BrowserWindow, protocol, ipcMain } from 'electron'
 import path from 'path'
 import isDev from 'electron-is-dev' // <-- ИМПОРТИРУЕМ ПАКЕТ
 import { registerIpcHandlers } from './ipc-handlers.js'
@@ -32,6 +32,8 @@ function createWindow() {
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'undocked' });
   }
+
+
 }
 
 app.whenReady().then(() => {

@@ -7,6 +7,12 @@ import './styles/style.css';
 
 console.log('[Renderer] renderer.js: Скрипт начал выполняться.');
 
+// Добавляем функции в глобальный window для доступа из main process
+import { hasUnsavedChanges } from './modules/state.js';
+import { handleQuickSave } from './modules/file-io.js';
+window.hasUnsavedChanges = hasUnsavedChanges;
+window.handleQuickSave = handleQuickSave;
+
 import { initializeEditor, setOnScrollCallback as setEditorScrollCallback, scrollToText as scrollToEditor } from './modules/editor.js';
 import { scheduleUpdate, setOnScrollCallback as setPreviewScrollCallback, scrollToText as scrollToPreview } from './modules/preview.js';
 import { initializeToolbar } from './modules/toolbar.js';
@@ -75,32 +81,31 @@ const handlePreviewScroll = (line, scrollElement) => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[Renderer] DOMContentLoaded: DOM полностью загружен и разобран.');
-  
+  console.log('[Renderer] DOMContentLoaded fired');
+
   try {
-    console.log('[Renderer] DOMContentLoaded: 1. Инициализация состояния...');
+    console.log('[Renderer] 1. Initializing state...');
     initializeState();
 
-    console.log('[Renderer] DOMContentLoaded: 2. Инициализация редактора...');
+    console.log('[Renderer] 2. Initializing editor...');
     const editorView = initializeEditor(scheduleUpdate);
+    console.log('[Renderer] Editor view created:', !!editorView);
 
-    console.log('[Renderer] DOMContentLoaded: 3. Инициализация панели инструментов...');
+    console.log('[Renderer] 3. Initializing toolbar...');
     initializeToolbar(editorView);
-    
-    console.log('[Renderer] DOMContentLoaded: 4. Инициализация файлового ввода/вывода...');
+
+    console.log('[Renderer] 4. Initializing file IO...');
     initializeFileIO(editorView);
 
-    console.log('[Renderer] DOMContentLoaded: 6. Настройка синхронизации скролла...');
+    console.log('[Renderer] 5. Setting up scroll sync...');
     setEditorScrollCallback(handleEditorScroll);
     setPreviewScrollCallback(handlePreviewScroll);
 
-    // Выполняем первый рендеринг для начального текста (если он есть)
-    console.log('[Renderer] DOMContentLoaded: Первоначальный рендеринг превью...');
+    console.log('[Renderer] 6. Initial rendering...');
     scheduleUpdate(editorView.state.doc.toString());
 
-    console.log('✅ [Renderer] Модульное приложение успешно инициализировано!');
+    console.log('[Renderer] Initialization complete!');
   } catch (error) {
-    console.error('❌ [Renderer] КРИТИЧЕСКАЯ ОШИБКА во время инициализации:', error);
+    console.error('[Renderer] Critical error during initialization:', error);
   }
 });
-
