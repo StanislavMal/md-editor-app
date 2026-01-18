@@ -3,11 +3,12 @@
 .container {
   display: flex;
   width: 100%;
-  height: calc(100vh - var(--toolbar-height));
+  height: 100vh;
+  background-color: var(--color-canvas-subtle);
   transform-origin: top left;
   transform: scale(var(--zoom-scale));
   width: calc(100% / var(--zoom-scale));
-  height: calc((100vh - var(--toolbar-height)) / var(--zoom-scale));
+  height: calc(100vh / var(--zoom-scale));
 }
 
 /* Панель редактора */
