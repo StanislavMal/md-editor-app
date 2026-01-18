@@ -139,7 +139,7 @@ async function handleSaveMd() {
   } catch (error) {
     alert(`Критическая ошибка сохранения: ${error.message}`);
   } finally {
-    setButtonLoading(saveMdBtn, false, 'Сохранить MD');
+    setButtonLoading(saveMdBtn, false, 'Сохранить как');
   }
 }
 
