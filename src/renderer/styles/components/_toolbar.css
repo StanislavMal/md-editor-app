@@ -71,9 +71,35 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .toolbar {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  .toolbar-group {
+    padding: var(--spacing-xs);
+  }
+}
+
 @media (max-width: 768px) {
   .toolbar-group {
     gap: 2px;
     padding: 2px;
+  }
+  .toolbar-divider {
+    margin: 0 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-section {
+    gap: var(--spacing-xs);
+  }
+  .toolbar-group {
+    gap: 1px;
+    padding: 1px;
+  }
+  .btn-icon {
+    min-width: 32px;
+    padding: var(--spacing-xs);
   }
 }

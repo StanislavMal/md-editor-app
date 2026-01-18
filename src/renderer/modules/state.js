@@ -33,6 +33,13 @@ export function initializeState() {
   const savedTheme = localStorage.getItem('theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
+  // Инициализируем zoom
+  const savedZoom = localStorage.getItem('zoomLevel');
+  if (savedZoom) {
+    state.zoomLevel = parseInt(savedZoom, 10);
+  }
+  setZoom(state.zoomLevel);
+
   // Загружаем сохраненный currentFilePath
   const savedFilePath = localStorage.getItem('currentFilePath');
   if (savedFilePath) {
@@ -70,8 +77,11 @@ export function toggleTheme() {
 
 export function setZoom(newZoom) {
   state.zoomLevel = Math.max(50, Math.min(200, newZoom));
-  state.ui.previewContainer.style.transform = `scale(${state.zoomLevel / 100})`;
+  // Применяем zoom ко всему интерфейсу через CSS переменную
+  document.documentElement.style.setProperty('--zoom-scale', state.zoomLevel / 100);
   state.ui.zoomLevelIndicator.textContent = `${state.zoomLevel}%`;
+  // Сохраняем в localStorage
+  localStorage.setItem('zoomLevel', state.zoomLevel);
 }
 
 export function zoomIn() {
