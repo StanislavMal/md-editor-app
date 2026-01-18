@@ -275,5 +275,26 @@ export function registerIpcHandlers(mainWindow) {
     }
   });
 
+  ipcMain.on('minimize-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) window.minimize();
+  });
+
+  ipcMain.on('maximize-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+      if (window.isMaximized()) {
+        window.unmaximize();
+      } else {
+        window.maximize();
+      }
+    }
+  });
+
+  ipcMain.on('close-window', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) window.close();
+  });
+
   console.log('[IPC] registerIpcHandlers: Все обработчики зарегистрированы.');
 }

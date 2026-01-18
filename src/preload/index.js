@@ -10,4 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quickSaveFile: (content, filePath) => ipcRenderer.invoke('quick-save-file', content, filePath),
   showContextMenu: () => ipcRenderer.send('show-context-menu'),
   saveImage: (base64Data) => ipcRenderer.invoke('save-image', base64Data),
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  maximizeWindow: () => ipcRenderer.send('maximize-window'),
+  closeWindow: () => ipcRenderer.send('close-window'),
 });

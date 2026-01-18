@@ -44,6 +44,7 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   
   /* Размеры */
+  --title-bar-height: 30px;
   --toolbar-height: 56px;
   --border-radius: 6px;
   --border-radius-lg: 8px;

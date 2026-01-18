@@ -1,9 +1,81 @@
 /* src/renderer/styles/layout/_layout.css */
 
+/* Кастомная шапка окна */
+.title-bar {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  -webkit-app-region: drag;
+  user-select: none;
+  z-index: 1001;
+}
+
+.title-bar-drag-area {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: var(--spacing-lg);
+}
+
+.app-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  user-select: none;
+}
+
+.title-bar-buttons {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.title-btn {
+  width: 46px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.title-btn:hover {
+  background: var(--color-canvas-subtle);
+}
+
+.title-btn:active {
+  background: var(--color-border-muted);
+}
+
+.close-btn:hover {
+  background: #e81123;
+  color: white;
+}
+
+.close-btn:active {
+  background: #c42b1c;
+}
+
+.title-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
 .container {
   display: flex;
   width: 100%;
-  height: calc(100vh / var(--zoom-scale) - var(--toolbar-height) / var(--zoom-scale));
+  height: calc(100vh / var(--zoom-scale) - (var(--toolbar-height) + var(--title-bar-height)) / var(--zoom-scale));
 }
 
 /* Панель редактора */

@@ -101,7 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setEditorScrollCallback(handleEditorScroll);
     setPreviewScrollCallback(handlePreviewScroll);
 
-    console.log('[Renderer] 6. Initial rendering...');
+    console.log('[Renderer] 6. Initializing title bar buttons...');
+    // Обработчики для кнопок шапки
+    document.getElementById('minimize-btn')?.addEventListener('click', () => {
+      window.electronAPI.minimizeWindow();
+    });
+    document.getElementById('maximize-btn')?.addEventListener('click', () => {
+      window.electronAPI.maximizeWindow();
+    });
+    document.getElementById('close-btn')?.addEventListener('click', () => {
+      window.electronAPI.closeWindow();
+    });
+
+    console.log('[Renderer] 7. Initial rendering...');
     scheduleUpdate(editorView.state.doc.toString());
 
     console.log('[Renderer] Initialization complete!');
