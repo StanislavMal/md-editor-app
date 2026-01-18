@@ -17,6 +17,10 @@ export function initializeFileIO(cmInstance) {
   document.getElementById('quick-save-btn').addEventListener('click', handleQuickSave);
   document.getElementById('save-md-btn').addEventListener('click', handleSaveMd);
   document.getElementById('save-pdf-btn').addEventListener('click', handleSavePdf);
+
+  // Кнопки в dropdown меню
+  document.getElementById('quick-save-dropdown-btn').addEventListener('click', handleQuickSave);
+  document.getElementById('save-pdf-dropdown-btn').addEventListener('click', handleSavePdf);
 }
 
 /**

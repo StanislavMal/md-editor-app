@@ -33,6 +33,28 @@ export function initializeToolbar(editorView) {
   // --- Переключатель темы ---
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
+  // --- Dropdown меню для файла ---
+  const fileBtn = document.getElementById('file-btn');
+  const dropdown = fileBtn.closest('.dropdown');
+  fileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  // Закрытие dropdown при клике вне
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // Закрытие dropdown при выборе элемента
+  dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+    item.addEventListener('click', () => {
+      dropdown.classList.remove('open');
+    });
+  });
+
   // --- Глобальные горячие клавиши ---
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === 'p') {
