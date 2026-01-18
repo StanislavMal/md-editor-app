@@ -64,7 +64,7 @@ function createWindow() {
 
         if (response === 0) { // Сохранить как
           console.log('[Main] User chose "Save as"');
-          const defaultName = fileInfo.currentFileName || 'Новый документ';
+          const defaultName = fileInfo.isFileLoadedFromDisk ? fileInfo.currentFileName : 'Новый документ';
           const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
             title: 'Сохранить как',
             defaultPath: `${defaultName}.md`,
