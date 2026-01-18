@@ -14,7 +14,7 @@ import {
   getGitHubCSS,
   getPrintCSS,
   getHighlightCSS,
-  getMathJaxChtmlCSS,
+  getMathJaxSvgCSS,
   buildFullHTML
 } from './file-utils.js';
 
@@ -154,7 +154,7 @@ export function registerIpcHandlers(mainWindow) {
       const githubCss = await getGitHubCSS();
       const printCss = await getPrintCSS();
       const highlightCss = await getHighlightCSS();
-      const mathJaxCss = await getMathJaxChtmlCSS();
+      const mathJaxCss = await getMathJaxSvgCSS();
 
       let pdfReadyHtml = await convertImagesToBase64(singleHtmlString, net);
       const fullHtml = `
