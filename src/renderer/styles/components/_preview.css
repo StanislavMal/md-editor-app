@@ -50,6 +50,12 @@
   box-sizing: border-box;
 }
 
+.markdown-body p {
+  page-break-inside: auto;
+  orphans: 3;
+  widows: 3;
+}
+
 .markdown-body pre {
   white-space: pre-wrap !important;
   word-wrap: break-word !important;

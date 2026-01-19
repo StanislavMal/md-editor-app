@@ -167,6 +167,8 @@ async function paginateAndRender(nodes) {
             currentPage = handlePreBlock(node, currentPage, pages, measurementContainer, pageContentHeight);
         } else if (node.nodeName === 'TABLE') {
             currentPage = handleTableBlock(node, currentPage, pages, measurementContainer, pageContentHeight);
+        } else if (node.nodeName === 'P') {
+            currentPage = handleParagraph(node, currentPage, pages, measurementContainer, pageContentHeight);
         } else {
             currentPage = handleDefaultNode(node, currentPage, pages, measurementContainer, pageContentHeight);
         }
@@ -267,6 +269,57 @@ function handlePreBlock(node, currentPage, pages, measurementContainer, pageCont
     }
     return currentPage;
 }
+function handleParagraph(node, currentPage, pages, measurementContainer, pageContentHeight) {
+    let currentPageContent = currentPage.querySelector('.markdown-body');
+
+    // Сначала попробуем добавить весь абзац
+    const nodeClone = node.cloneNode(true);
+    currentPageContent.appendChild(nodeClone);
+
+    if (currentPageContent.scrollHeight <= pageContentHeight) {
+        return currentPage;
+    }
+
+    // Если не помещается, удаляем и разбиваем по словам
+    nodeClone.remove();
+
+    const words = node.textContent.split(/\s+/);
+    let currentP = document.createElement('p');
+    currentPageContent.appendChild(currentP);
+
+    for (const word of words) {
+        currentP.textContent += (currentP.textContent ? ' ' : '') + word;
+
+        if (currentPageContent.scrollHeight > pageContentHeight) {
+            // Удаляем последнее слово, которое не поместилось
+            const lastSpaceIndex = currentP.textContent.lastIndexOf(' ');
+            if (lastSpaceIndex > 0) {
+                currentP.textContent = currentP.textContent.substring(0, lastSpaceIndex);
+            } else {
+                currentP.textContent = '';
+            }
+
+            // Если p пустой, значит даже одно слово не помещается, но это редкий случай
+            if (!currentP.textContent.trim()) {
+                currentP.remove();
+            }
+
+            // Создаем новую страницу
+            pages.push(currentPage);
+            currentPage = createPage();
+            currentPageContent = currentPage.querySelector('.markdown-body');
+            measurementContainer.innerHTML = '';
+            measurementContainer.appendChild(currentPage);
+
+            // Начинаем новый абзац с оставшимися словами
+            currentP = document.createElement('p');
+            currentPageContent.appendChild(currentP);
+            currentP.textContent = word;
+        }
+    }
+
+    return currentPage;
+}
 function handleTableBlock(node, currentPage, pages, measurementContainer, pageContentHeight) {
     let currentPageContent = currentPage.querySelector('.markdown-body');
     const thead = node.querySelector('thead')?.cloneNode(true);
@@ -277,7 +330,7 @@ function handleTableBlock(node, currentPage, pages, measurementContainer, pageCo
         return currentPage;
     }
     currentPageContent.lastChild.remove();
-    
+
     if (currentPageContent.scrollHeight > pageContentHeight - 100 && currentPageContent.childElementCount > 0) {
          pages.push(currentPage);
          currentPage = createPage();
@@ -296,12 +349,12 @@ function handleTableBlock(node, currentPage, pages, measurementContainer, pageCo
         if (currentPageContent.scrollHeight > pageContentHeight) {
             currentTbody.lastChild.remove();
             pages.push(currentPage);
-            
+
             currentPage = createPage();
             currentPageContent = currentPage.querySelector('.markdown-body');
             measurementContainer.innerHTML = '';
             measurementContainer.appendChild(currentPage);
-            
+
             currentTable = node.cloneNode(false);
             if (thead) currentTable.appendChild(thead.cloneNode(true));
             currentTbody = currentTable.appendChild(document.createElement('tbody'));
