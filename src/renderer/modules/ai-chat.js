@@ -265,6 +265,14 @@ export function initializeAIChat() {
   // Setup keyboard shortcuts
   setupKeyboardShortcuts();
 
+  // Setup global function for example buttons
+  window.sendExampleMessage = (message) => {
+    if (inputElement) {
+      inputElement.value = message;
+      handleSendMessage();
+    }
+  };
+
   console.log('[AI Chat] Initialized successfully');
 }
 
@@ -336,7 +344,7 @@ function setupEventListeners() {
           messagesContainer.innerHTML = '';
           const welcomeMessage = document.createElement('div');
           welcomeMessage.className = 'ai-chat-welcome';
-          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий:</strong><br>• "Переведи текст на английский"<br>• "Исправь ошибки и улучши стиль"<br>• "Проверь пунктуацию и грамматику"<br>• "Сократи текст до 200 слов"<br>• "Перепиши в более формальном стиле"<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
+          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий (щелкните для быстрого применения):</strong><br>• <button onclick="window.sendExampleMessage('Проверь и исправь синтаксис Markdown')" class="ai-example-btn">Проверь и исправь синтаксис Markdown</button><br>• <button onclick="window.sendExampleMessage('Переведи текст на английский')" class="ai-example-btn">Переведи текст на английский</button><br>• <button onclick="window.sendExampleMessage('Исправь ошибки и улучши стиль')" class="ai-example-btn">Исправь ошибки и улучши стиль</button><br>• <button onclick="window.sendExampleMessage('Проверь пунктуацию и грамматику')" class="ai-example-btn">Проверь пунктуацию и грамматику</button><br>• <button onclick="window.sendExampleMessage('Сократи текст до 200 слов')" class="ai-example-btn">Сократи текст до 200 слов</button><br>• <button onclick="window.sendExampleMessage('Перепиши в более формальном стиле')" class="ai-example-btn">Перепиши в более формальном стиле</button><br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
           messagesContainer.appendChild(welcomeMessage);
         }
       } else if (newMode === 'chat') {
@@ -759,7 +767,7 @@ function renderMessages() {
     if (currentMode === 'chat') {
       welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p>Привет! Я ваш AI-ассистент. Задавайте вопросы, просите помощи с текстом или кодом. Просто введите сообщение!</p></div></div>`;
     } else if (currentMode === 'editing') {
-      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий:</strong><br>• "Переведи текст на английский"<br>• "Исправь ошибки и улучши стиль"<br>• "Проверь пунктуацию и грамматику"<br>• "Сократи текст до 200 слов"<br>• "Перепиши в более формальном стиле"<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
+      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий (щелкните для быстрого применения):</strong><br>• <button onclick="window.sendExampleMessage('Проверь и исправь синтаксис Markdown')" class="ai-example-btn">Проверь и исправь синтаксис Markdown</button><br>• <button onclick="window.sendExampleMessage('Переведи текст на английский')" class="ai-example-btn">Переведи текст на английский</button><br>• <button onclick="window.sendExampleMessage('Исправь ошибки и улучши стиль')" class="ai-example-btn">Исправь ошибки и улучши стиль</button><br>• <button onclick="window.sendExampleMessage('Проверь пунктуацию и грамматику')" class="ai-example-btn">Проверь пунктуацию и грамматику</button><br>• <button onclick="window.sendExampleMessage('Сократи текст до 200 слов')" class="ai-example-btn">Сократи текст до 200 слов</button><br>• <button onclick="window.sendExampleMessage('Перепиши в более формальном стиле')" class="ai-example-btn">Перепиши в более формальном стиле</button><br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
     }
     messagesContainer.appendChild(welcomeMessage);
   }

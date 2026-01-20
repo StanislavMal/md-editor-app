@@ -396,6 +396,37 @@
   background: var(--success-hover-dark, #218838);
 }
 
+/* Example buttons in welcome message */
+.ai-example-btn {
+  background: none;
+  border: 1px solid var(--border-color, #ced4da);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--accent-color, #007bff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.ai-example-btn:hover {
+  background: var(--accent-color, #007bff);
+  color: white;
+  border-color: var(--accent-color, #007bff);
+}
+
+[data-theme="dark"] .ai-example-btn {
+  border-color: var(--border-color-dark, #3e3e42);
+  color: var(--accent-color, #007bff);
+}
+
+[data-theme="dark"] .ai-example-btn:hover {
+  background: var(--accent-color, #007bff);
+  color: white;
+}
+
 /* Conversation History Dropdown */
 .ai-chat-history-dropdown {
   position: absolute;
