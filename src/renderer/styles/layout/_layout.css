@@ -114,15 +114,7 @@
   display: none;
 }
 
-/* Когда панель открыта, кнопка двигается вместе с ней */
-.ai-chat-panel.open ~ .ai-chat-toggle {
-  left: 350px;
-}
-
-/* Когда панель расширена, кнопка двигается к центру */
-.ai-chat-panel.expanded ~ .ai-chat-toggle {
-  left: calc(50% - 6px);
-}
+/* Кнопка всегда остается слева */
 
 [data-theme="dark"] .ai-chat-toggle {
   border-color: var(--color-border-default);

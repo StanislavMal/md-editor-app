@@ -375,7 +375,6 @@ function setupEventListeners() {
     });
   }
 
-  // No more auto-hide on click outside - panel stays open until explicitly closed
 }
 
 // Setup keyboard shortcuts
