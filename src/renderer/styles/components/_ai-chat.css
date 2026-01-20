@@ -18,6 +18,12 @@
   opacity: 1;
 }
 
+.ai-chat-panel.expanded {
+  flex: 0 0 50%;
+  max-width: 700px;
+  width: auto;
+}
+
 [data-theme="dark"] .ai-chat-panel {
   background: var(--bg-color-dark, #1e1e1e);
   border-right-color: var(--border-color-dark, #3e3e42);

@@ -2,6 +2,7 @@
 console.log('[Module Loaded] state.js');
 
 import { scheduleUpdate } from './preview.js';
+import { getPanelOpenState } from './ai-chat.js';
 
 const state = {
   previewVisible: true,
@@ -50,10 +51,9 @@ export function initializeState() {
 
 export function togglePreview(editorView) {
   state.previewVisible = !state.previewVisible;
-  
+
   if (state.previewVisible) {
     state.ui.previewPane.classList.remove('hidden');
-    state.ui.editorPane.classList.remove('fullwidth');
     state.ui.togglePreviewBtn.classList.add('active');
     state.ui.togglePreviewBtn.querySelector('.btn-text').textContent = 'Превью';
     if(editorView) {
@@ -61,9 +61,37 @@ export function togglePreview(editorView) {
     }
   } else {
     state.ui.previewPane.classList.add('hidden');
-    state.ui.editorPane.classList.add('fullwidth');
     state.ui.togglePreviewBtn.classList.remove('active');
     state.ui.togglePreviewBtn.querySelector('.btn-text').textContent = 'Показать';
+  }
+
+  // Update layout based on new state
+  updateEditorPaneFullwidth();
+}
+
+// Update editor pane fullwidth based on preview and panel state
+export function updateEditorPaneFullwidth() {
+  if (!state.ui.editorPane) return;
+
+  const panelElement = document.getElementById('ai-chat-panel');
+
+  if (state.previewVisible) {
+    state.ui.editorPane.classList.remove('fullwidth');
+    if (panelElement) {
+      panelElement.classList.remove('expanded');
+    }
+  } else {
+    if (getPanelOpenState()) {
+      state.ui.editorPane.classList.remove('fullwidth');
+      if (panelElement) {
+        panelElement.classList.add('expanded');
+      }
+    } else {
+      state.ui.editorPane.classList.add('fullwidth');
+      if (panelElement) {
+        panelElement.classList.remove('expanded');
+      }
+    }
   }
 }
 

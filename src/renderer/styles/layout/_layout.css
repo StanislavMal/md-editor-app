@@ -119,6 +119,11 @@
   left: 350px;
 }
 
+/* Когда панель расширена, кнопка двигается к центру */
+.ai-chat-panel.expanded ~ .ai-chat-toggle {
+  left: calc(50% - 6px);
+}
+
 [data-theme="dark"] .ai-chat-toggle {
   border-color: var(--color-border-default);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);

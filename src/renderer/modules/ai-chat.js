@@ -3,6 +3,7 @@
 import { getAISettingsPublic as getAISettings } from './ai.js';
 import { getEditorView } from './editor.js';
 import { chatWithAIStreaming } from './ai.js';
+import { updateEditorPaneFullwidth } from './state.js';
 
 console.log('[Module Loaded] ai-chat.js');
 
@@ -61,6 +62,11 @@ function loadConversation(conversationId) {
   const conversation = conversations.find(conv => conv.id === conversationId);
   if (conversation) {
     currentConversationId = conversationId;
+    // If user is in editing mode, switch to chat mode
+    if (currentMode === 'editing') {
+      currentMode = 'chat';
+      updateModeButtons();
+    }
     updateChatHistoryReference();
     renderMessages();
     updatePanelTitle();
@@ -404,6 +410,9 @@ function openPanel() {
   isPanelOpen = true;
   panelElement.classList.add('open');
 
+  // Update editor pane layout
+  updateEditorPaneFullwidth();
+
   // Focus input
   setTimeout(() => {
     if (inputElement) {
@@ -420,6 +429,9 @@ function closePanel() {
 
   isPanelOpen = false;
   panelElement.classList.remove('open');
+
+  // Update editor pane layout
+  updateEditorPaneFullwidth();
 }
 
 // Handle sending message
@@ -823,4 +835,9 @@ export function getChatStats() {
     userMessages: chatHistory.filter(m => m.role === 'user').length,
     assistantMessages: chatHistory.filter(m => m.role === 'assistant').length
   };
+}
+
+// Get panel open state
+export function getPanelOpenState() {
+  return isPanelOpen;
 }
