@@ -24,7 +24,7 @@ function getCurrentConversation() {
 // Helper to get current chat history (messages of current conversation)
 function getCurrentChatHistory() {
   const currentConv = getCurrentConversation();
-  return currentConv ? currentConv.messages : [];
+  return currentConv ? currentConv.messages.filter(msg => msg.mode === currentMode) : [];
 }
 
 // Update chatHistory reference
@@ -129,6 +129,8 @@ function updatePanelTitle() {
 
 // Show conversation history dropdown
 function showConversationHistory() {
+  console.log('[AI Chat] History button clicked, conversations:', conversations);
+
   // Remove existing dropdown
   const existingDropdown = document.querySelector('.ai-chat-history-dropdown');
   if (existingDropdown) {
@@ -235,8 +237,10 @@ function setupEventListeners() {
 
   // History button
   const historyButton = document.getElementById('ai-chat-history');
+  console.log('[AI Chat] History button element:', historyButton);
   if (historyButton) {
     historyButton.addEventListener('click', (e) => {
+      console.log('[AI Chat] History button clicked event fired');
       e.stopPropagation();
       showConversationHistory();
     });
@@ -275,8 +279,29 @@ function setupEventListeners() {
   // Mode select
   if (modeSelect) {
     modeSelect.addEventListener('change', (e) => {
-      currentMode = e.target.value;
+      const newMode = e.target.value;
+      currentMode = newMode;
       updateStatus();
+
+      if (newMode === 'editing') {
+        // Clear messages for editing mode
+        if (messagesContainer) {
+          messagesContainer.innerHTML = '';
+          const welcomeMessage = document.createElement('div');
+          welcomeMessage.className = 'ai-chat-welcome';
+          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p>Привет! Я AI-помощник для работы с Markdown. Выберите режим и начните общение.</p></div></div>`;
+          messagesContainer.appendChild(welcomeMessage);
+        }
+      } else if (newMode === 'chat') {
+        // Switch to last chat conversation
+        const chatConv = conversations.find(conv => conv.messages.some(msg => msg.mode === 'chat'));
+        if (chatConv) {
+          loadConversation(chatConv.id);
+        } else {
+          // If no chat conversations, create new
+          createNewConversation();
+        }
+      }
     });
   }
 
@@ -346,6 +371,7 @@ async function handleSendMessage() {
 
   // Add user message
   addMessage('user', message);
+  updateChatHistoryReference(); // Update after adding message
 
   // Update conversation title if needed
   updateConversationTitle();
