@@ -49,6 +49,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     frame: false,
+    fullscreen: true,
     icon: path.join(__dirname, '../../assets/icon.png'),
     show: false,
     webPreferences: {

@@ -301,11 +301,7 @@ export function registerIpcHandlers(mainWindow) {
   ipcMain.on('maximize-window', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window) {
-      if (window.isMaximized()) {
-        window.unmaximize();
-      } else {
-        window.maximize();
-      }
+      window.setFullScreen(!window.isFullScreen());
     }
   });
 
