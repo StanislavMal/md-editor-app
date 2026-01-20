@@ -336,7 +336,7 @@ function setupEventListeners() {
           messagesContainer.innerHTML = '';
           const welcomeMessage = document.createElement('div');
           welcomeMessage.className = 'ai-chat-welcome';
-          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p>Привет! Я AI-помощник для работы с Markdown. Выберите режим и начните общение.</p></div></div>`;
+          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Вы можете:<br>• Выделить текст и попросить его изменить (перефразировать, исправить, улучшить)<br>• Указать задание для всего документа<br>• Попросить сгенерировать новый контент<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
           messagesContainer.appendChild(welcomeMessage);
         }
       } else if (newMode === 'chat') {
@@ -428,6 +428,11 @@ async function handleSendMessage() {
 
   // Save conversations
   saveConversations();
+
+  // Refocus input for next message
+  if (inputElement) {
+    inputElement.focus();
+  }
 }
 
 // Process message based on current mode
@@ -547,6 +552,14 @@ async function callAIAPI(message, mode, selection = null) {
 // Add message to chat
 function addMessage(role, content, isLoading = false) {
   if (!messagesContainer) return null;
+
+  // Remove welcome message if user sends first message
+  if (role === 'user') {
+    const welcomeMessage = messagesContainer.querySelector('.ai-chat-welcome');
+    if (welcomeMessage) {
+      welcomeMessage.remove();
+    }
+  }
 
   const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -736,10 +749,18 @@ function loadChatHistory() {
 function renderMessages() {
   if (!messagesContainer) return;
 
-  // Clear existing messages except welcome
-  const welcomeMessage = messagesContainer.querySelector('.ai-chat-welcome');
+  // Clear existing messages
   messagesContainer.innerHTML = '';
-  if (welcomeMessage) {
+
+  // Add welcome message if no messages in current mode
+  if (chatHistory.length === 0) {
+    const welcomeMessage = document.createElement('div');
+    welcomeMessage.className = 'ai-chat-welcome';
+    if (currentMode === 'chat') {
+      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p>Привет! Я ваш AI-ассистент. Задавайте вопросы, просите помощи с текстом или кодом. Просто введите сообщение!</p></div></div>`;
+    } else if (currentMode === 'editing') {
+      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>Выделите текст или укажите задание - я изменю его автоматически.</p></div></div>`;
+    }
     messagesContainer.appendChild(welcomeMessage);
   }
 
