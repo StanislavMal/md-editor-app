@@ -336,7 +336,7 @@ function setupEventListeners() {
           messagesContainer.innerHTML = '';
           const welcomeMessage = document.createElement('div');
           welcomeMessage.className = 'ai-chat-welcome';
-          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Вы можете:<br>• Выделить текст и попросить его изменить (перефразировать, исправить, улучшить)<br>• Указать задание для всего документа<br>• Попросить сгенерировать новый контент<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
+          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий:</strong><br>• "Переведи текст на английский"<br>• "Исправь ошибки и улучши стиль"<br>• "Проверь пунктуацию и грамматику"<br>• "Сократи текст до 200 слов"<br>• "Перепиши в более формальном стиле"<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
           messagesContainer.appendChild(welcomeMessage);
         }
       } else if (newMode === 'chat') {
@@ -759,7 +759,7 @@ function renderMessages() {
     if (currentMode === 'chat') {
       welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p>Привет! Я ваш AI-ассистент. Задавайте вопросы, просите помощи с текстом или кодом. Просто введите сообщение!</p></div></div>`;
     } else if (currentMode === 'editing') {
-      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>Выделите текст или укажите задание - я изменю его автоматически.</p></div></div>`;
+      welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий:</strong><br>• "Переведи текст на английский"<br>• "Исправь ошибки и улучши стиль"<br>• "Проверь пунктуацию и грамматику"<br>• "Сократи текст до 200 слов"<br>• "Перепиши в более формальном стиле"<br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
     }
     messagesContainer.appendChild(welcomeMessage);
   }
