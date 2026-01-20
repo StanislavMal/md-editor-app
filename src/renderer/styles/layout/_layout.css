@@ -114,7 +114,12 @@
   display: none;
 }
 
-/* Кнопка всегда остается слева */
+/* Когда панель открыта, кнопка "втискивается" в глубь экрана */
+.ai-chat-panel.open ~ .ai-chat-toggle {
+  width: 8px;
+  height: 60px;
+  transform: translateY(-50%) translateX(4px);
+}
 
 [data-theme="dark"] .ai-chat-toggle {
   border-color: var(--color-border-default);
