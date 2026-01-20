@@ -236,7 +236,12 @@ function setupEventListeners() {
   // History button
   const historyButton = document.getElementById('ai-chat-history');
   if (historyButton) {
-    historyButton.addEventListener('click', showConversationHistory);
+    historyButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showConversationHistory();
+    });
+  } else {
+    console.warn('[AI Chat] History button not found');
   }
 
   // New conversation button
@@ -396,12 +401,12 @@ async function handleEditingMode(message) {
   if (hasSelection) {
     // Edit selected text
     textToEdit = editor.state.doc.sliceString(selection.from, selection.to);
-    prompt = `Редактируй следующий выделенный текст согласно инструкции: "${message}"\n\nТекст для редактирования:\n${textToEdit}`;
+    prompt = `Задание: ${message}\n\nТекст для изменения:\n${textToEdit}\n\nВерни ТОЛЬКО измененный текст, без объяснений и комментариев.`;
     modeSelection = selection;
   } else {
     // Edit entire document content
     textToEdit = editor.state.doc.toString();
-    prompt = `Редактируй весь следующий текст согласно инструкции: "${message}"\n\nТекст для редактирования:\n${textToEdit}`;
+    prompt = `Задание: ${message}\n\nТекст для изменения:\n${textToEdit}\n\nВерни ТОЛЬКО измененный текст, без объяснений и комментариев.`;
     modeSelection = { from: 0, to: textToEdit.length };
   }
 
@@ -424,9 +429,24 @@ async function callAIAPI(message, mode, selection = null) {
 
   try {
     let accumulatedText = '';
+    let messagesForAI;
+
+    if (mode === 'edit') {
+      // For editing mode, send only the current task + content
+      messagesForAI = [{
+        role: 'user',
+        content: message
+      }];
+    } else {
+      // For chat mode, send full conversation context
+      messagesForAI = chatHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    }
 
     await chatWithAIStreaming(
-      message,
+      messagesForAI,
       (chunk) => {
         accumulatedText = chunk;
         updateMessage(loadingMessageId, accumulatedText, true);
@@ -434,9 +454,10 @@ async function callAIAPI(message, mode, selection = null) {
       (finalText) => {
         updateMessage(loadingMessageId, finalText, false);
 
-        // Add apply button for certain modes
+        // For editing mode, apply changes immediately
         if (mode === 'edit' && selection) {
-          addApplyButton(loadingMessageId, finalText, selection);
+          applyChanges(finalText, selection);
+          updateMessage(loadingMessageId, 'Готово. Что ещё?', false);
         }
       },
       (error) => {
@@ -530,8 +551,7 @@ function applyChanges(content, selection) {
     selection: { anchor: selection.from + content.length }
   });
 
-  // Show success message
-  addMessage('assistant', 'Изменения применены в редакторе');
+  // No additional message - AI response will show "Готово. Что ещё?"
 }
 
 // Format message content (basic markdown support)

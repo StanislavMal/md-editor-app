@@ -532,7 +532,7 @@ async function callGroqChatAPI(text, apiKey, modelConfig) {
 }
 
 // Streaming DeepSeek для общего чата
-async function streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+async function streamDeepSeekChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
       method: 'POST',
@@ -542,10 +542,7 @@ async function streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError,
       },
       body: JSON.stringify({
         model: modelConfig.id,
-        messages: [{
-          role: 'user',
-          content: text
-        }],
+        messages: messages,
         max_tokens: modelConfig.maxTokens,
         temperature: 0.7,
         stream: true
@@ -599,7 +596,7 @@ async function streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError,
 }
 
 // Streaming Gemini для общего чата
-async function streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+async function streamGeminiChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
       method: 'POST',
@@ -609,10 +606,7 @@ async function streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, m
       },
       body: JSON.stringify({
         model: modelConfig.id,
-        messages: [{
-          role: 'user',
-          content: text
-        }],
+        messages: messages,
         max_tokens: modelConfig.maxTokens,
         temperature: 0.7,
         stream: true
@@ -666,7 +660,7 @@ async function streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, m
 }
 
 // Streaming Groq для общего чата
-async function streamGroqChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+async function streamGroqChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
     const groq = new Groq({
       apiKey: apiKey,
@@ -675,10 +669,7 @@ async function streamGroqChatAPI(text, apiKey, onChunk, onComplete, onError, mod
 
     const stream = await groq.chat.completions.create({
       model: modelConfig.id,
-      messages: [{
-        role: 'user',
-        content: text
-      }],
+      messages: messages,
       temperature: 0.7,
       max_tokens: modelConfig.maxTokens,
       top_p: 1,
@@ -747,13 +738,21 @@ export async function chatWithAI(text) {
   }
 }
 
-// Streaming версия для общего чата
-export async function chatWithAIStreaming(text, onChunk, onComplete, onError) {
+// Streaming версия для общего чата с контекстом
+export async function chatWithAIStreaming(messagesOrText, onChunk, onComplete, onError) {
   const settings = getAISettings();
 
-  if (!text || text.trim().length === 0) {
-    onError(new Error('Текст для чата пуст'));
-    return;
+  // Определяем, передан ли массив сообщений или просто текст
+  let messages;
+  if (Array.isArray(messagesOrText)) {
+    messages = messagesOrText;
+  } else {
+    // Для обратной совместимости, если передан текст
+    if (!messagesOrText || messagesOrText.trim().length === 0) {
+      onError(new Error('Текст для чата пуст'));
+      return;
+    }
+    messages = [{ role: 'user', content: messagesOrText }];
   }
 
   // Проверка наличия API ключа
@@ -769,11 +768,11 @@ export async function chatWithAIStreaming(text, onChunk, onComplete, onError) {
 
   try {
     if (settings.provider === 'deepseek') {
-      await streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+      await streamDeepSeekChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig);
     } else if (settings.provider === 'gemini') {
-      await streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+      await streamGeminiChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig);
     } else {
-      await streamGroqChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+      await streamGroqChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig);
     }
   } catch (error) {
     console.error('[AI] Ошибка streaming чата:', error);
