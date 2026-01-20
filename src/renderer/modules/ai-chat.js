@@ -127,6 +127,32 @@ function updatePanelTitle() {
   }
 }
 
+// Delete conversation by ID
+function deleteConversation(conversationId) {
+  const index = conversations.findIndex(conv => conv.id === conversationId);
+  if (index === -1) return;
+
+  // Remove from array
+  conversations.splice(index, 1);
+
+  // If deleted current conversation, switch to another or create new
+  if (conversationId === currentConversationId) {
+    if (conversations.length > 0) {
+      // Switch to first conversation
+      currentConversationId = conversations[0].id;
+      updateChatHistoryReference();
+      renderMessages();
+      updatePanelTitle();
+    } else {
+      // No conversations left, create new
+      createNewConversation();
+    }
+  }
+
+  // Save changes
+  saveConversations();
+}
+
 // Show conversation history dropdown
 function showConversationHistory() {
   console.log('[AI Chat] History button clicked, conversations:', conversations);
@@ -146,21 +172,42 @@ function showConversationHistory() {
   conversations.forEach((conv, index) => {
     const item = document.createElement('div');
     item.className = `ai-chat-history-item${conv.id === currentConversationId ? ' active' : ''}`;
-    item.onclick = () => {
+
+    // Main click handler for loading conversation
+    item.onclick = (e) => {
+      // Don't load if clicking delete button
+      if (e.target.closest('.ai-chat-history-delete')) return;
       loadConversation(conv.id);
       dropdown.remove();
     };
 
     const date = new Date(conv.timestamp).toLocaleString();
-    const preview = conv.messages.length > 0
-      ? conv.messages.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || 'Пустой диалог'
+    const lastMessage = conv.messages.length > 0 ? conv.messages[conv.messages.length - 1] : null;
+    const preview = lastMessage
+      ? `${lastMessage.role === 'user' ? 'Вы' : 'ИИ'}: ${lastMessage.content.substring(0, 30)}${lastMessage.content.length > 30 ? '...' : ''}`
       : 'Пустой диалог';
 
     item.innerHTML = `
-      <div class="ai-chat-history-title">${conv.title}</div>
-      <div class="ai-chat-history-meta">${date} • ${conv.messages.length} сообщений</div>
-      <div class="ai-chat-history-preview">${preview}</div>
+      <div class="ai-chat-history-content">
+        <div class="ai-chat-history-title">${conv.title}</div>
+        <div class="ai-chat-history-meta">${date} • ${conv.messages.length} сообщений</div>
+        <div class="ai-chat-history-preview">${preview}</div>
+      </div>
+      <button class="ai-chat-history-delete" title="Удалить диалог">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+        </svg>
+      </button>
     `;
+
+    // Add delete button event listener
+    const deleteButton = item.querySelector('.ai-chat-history-delete');
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteConversation(conv.id);
+      dropdown.remove();
+      showConversationHistory(); // Re-show dropdown
+    });
 
     dropdown.appendChild(item);
   });

@@ -13,6 +13,8 @@
   --color-success: #1a7f37;
   --color-success-hover: #1a7f37;
   --color-danger: #cf222e;
+  --color-error: #cf222e;
+  --color-error-hover: #b6232a;
   
   /* Нейтральные цвета - LIGHT */
   --color-canvas: #fafbfc;
@@ -70,6 +72,10 @@
    DESIGN TOKENS - DARK THEME
    ================================================================ */
 [data-theme="dark"] {
+  /* Цвета бренда - DARK */
+  --color-error: #f85149;
+  --color-error-hover: #da3633;
+
   /* Нейтральные цвета - DARK */
   --color-canvas: #0d1117;
   --color-canvas-subtle: #010409;
