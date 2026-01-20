@@ -566,16 +566,18 @@ function addMessage(role, content, isLoading = false) {
   // Scroll to bottom
   scrollToBottom();
 
-  // Add to current conversation
-  const currentConv = getCurrentConversation();
-  if (currentConv) {
-    currentConv.messages.push({
-      id: messageId,
-      role,
-      content,
-      timestamp: Date.now(),
-      mode: currentMode
-    });
+  // Add to current conversation only for chat mode
+  if (currentMode === 'chat') {
+    const currentConv = getCurrentConversation();
+    if (currentConv) {
+      currentConv.messages.push({
+        id: messageId,
+        role,
+        content,
+        timestamp: Date.now(),
+        mode: currentMode
+      });
+    }
   }
 
   return messageId;
@@ -595,6 +597,17 @@ function updateMessage(messageId, content, isLoading = false) {
     messageElement.classList.add('ai-message-loading');
   } else {
     messageElement.classList.remove('ai-message-loading');
+  }
+
+  // Update content in conversation messages array only for chat mode
+  if (currentMode === 'chat') {
+    const currentConv = getCurrentConversation();
+    if (currentConv) {
+      const msg = currentConv.messages.find(m => m.id === messageId);
+      if (msg) {
+        msg.content = content;
+      }
+    }
   }
 }
 
