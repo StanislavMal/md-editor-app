@@ -468,6 +468,319 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
   }
 }
 
+// Вызов DeepSeek API для общего чата
+async function callDeepSeekChatAPI(text, apiKey, modelConfig) {
+  const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
+    model: modelConfig.id,
+    messages: [{
+      role: 'user',
+      content: text
+    }],
+    max_tokens: modelConfig.maxTokens,
+    temperature: 0.7
+  }, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  return response.data.choices[0].message.content;
+}
+
+// Вызов Gemini API для общего чата
+async function callGeminiChatAPI(text, apiKey, modelConfig) {
+  const response = await axios.post(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
+    model: modelConfig.id,
+    messages: [{
+      role: 'user',
+      content: text
+    }],
+    max_tokens: modelConfig.maxTokens,
+    temperature: 0.7
+  }, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  return response.data.choices[0].message.content;
+}
+
+// Вызов Groq API для общего чата
+async function callGroqChatAPI(text, apiKey, modelConfig) {
+  const groq = new Groq({
+    apiKey: apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
+  const completion = await groq.chat.completions.create({
+    model: modelConfig.id,
+    messages: [{
+      role: 'user',
+      content: text
+    }],
+    temperature: 0.7,
+    max_tokens: modelConfig.maxTokens,
+    top_p: 1,
+    stream: false,
+    stop: null
+  });
+
+  return completion.choices[0].message.content;
+}
+
+// Streaming DeepSeek для общего чата
+async function streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+  try {
+    const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelConfig.id,
+        messages: [{
+          role: 'user',
+          content: text
+        }],
+        max_tokens: modelConfig.maxTokens,
+        temperature: 0.7,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        onComplete(accumulatedText);
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6);
+
+          if (jsonStr === '[DONE]') {
+            onComplete(accumulatedText);
+            return;
+          }
+
+          try {
+            const data = JSON.parse(jsonStr);
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedText += content;
+              onChunk(accumulatedText);
+            }
+          } catch (e) {
+            // Игнорируем невалидный JSON
+          }
+        }
+      }
+    }
+  } catch (error) {
+    onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
+  }
+}
+
+// Streaming Gemini для общего чата
+async function streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+  try {
+    const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelConfig.id,
+        messages: [{
+          role: 'user',
+          content: text
+        }],
+        max_tokens: modelConfig.maxTokens,
+        temperature: 0.7,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        onComplete(accumulatedText);
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6);
+
+          if (jsonStr === '[DONE]') {
+            onComplete(accumulatedText);
+            return;
+          }
+
+          try {
+            const data = JSON.parse(jsonStr);
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedText += content;
+              onChunk(accumulatedText);
+            }
+          } catch (e) {
+            // Игнорируем невалидный JSON
+          }
+        }
+      }
+    }
+  } catch (error) {
+    onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
+  }
+}
+
+// Streaming Groq для общего чата
+async function streamGroqChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+  try {
+    const groq = new Groq({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const stream = await groq.chat.completions.create({
+      model: modelConfig.id,
+      messages: [{
+        role: 'user',
+        content: text
+      }],
+      temperature: 0.7,
+      max_tokens: modelConfig.maxTokens,
+      top_p: 1,
+      stream: true,
+      stop: null
+    });
+
+    let accumulatedText = '';
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      accumulatedText += content;
+      onChunk(accumulatedText);
+    }
+
+    onComplete(accumulatedText);
+  } catch (error) {
+    onError(new Error(`Ошибка стрима Groq: ${error.message}`));
+  }
+}
+
+// Основная функция для общего чата
+export async function chatWithAI(text) {
+  const settings = getAISettings();
+
+  if (!text || text.trim().length === 0) {
+    throw new Error('Текст для чата пуст');
+  }
+
+  // Проверка наличия API ключа
+  const apiKey = settings.provider === 'deepseek' ? settings.deepseekKey :
+                 settings.provider === 'gemini' ? settings.geminiKey :
+                 settings.groqKey;
+  if (!apiKey) {
+    throw new Error(`API ключ для ${settings.provider} не настроен. Добавьте ключ в настройках.`);
+  }
+
+  const modelConfig = getModelConfig(settings.provider, settings.model);
+
+  try {
+    if (settings.provider === 'deepseek') {
+      return await callDeepSeekChatAPI(text, apiKey, modelConfig);
+    } else if (settings.provider === 'gemini') {
+      return await callGeminiChatAPI(text, apiKey, modelConfig);
+    } else {
+      return await callGroqChatAPI(text, apiKey, modelConfig);
+    }
+  } catch (error) {
+    console.error('[AI] Ошибка чата:', error);
+
+    if (error.response) {
+      if (error.response.status === 401) {
+        throw new Error('Неверный API ключ');
+      } else if (error.response.status === 429) {
+        throw new Error('Превышен лимит запросов к API');
+      } else if (error.response.status === 400) {
+        throw new Error('Некорректный запрос к API');
+      } else {
+        throw new Error(`Ошибка API: ${error.response.status} ${error.response.statusText}`);
+      }
+    } else if (error.code === 'ECONNREFUSED') {
+      throw new Error('Не удалось подключиться к API серверу');
+    } else {
+      throw new Error(`Ошибка: ${error.message}`);
+    }
+  }
+}
+
+// Streaming версия для общего чата
+export async function chatWithAIStreaming(text, onChunk, onComplete, onError) {
+  const settings = getAISettings();
+
+  if (!text || text.trim().length === 0) {
+    onError(new Error('Текст для чата пуст'));
+    return;
+  }
+
+  // Проверка наличия API ключа
+  const apiKey = settings.provider === 'deepseek' ? settings.deepseekKey :
+                 settings.provider === 'gemini' ? settings.geminiKey :
+                 settings.groqKey;
+  if (!apiKey) {
+    onError(new Error(`API ключ для ${settings.provider} не настроен. Добавьте ключ в настройках.`));
+    return;
+  }
+
+  const modelConfig = getModelConfig(settings.provider, settings.model);
+
+  try {
+    if (settings.provider === 'deepseek') {
+      await streamDeepSeekChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+    } else if (settings.provider === 'gemini') {
+      await streamGeminiChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+    } else {
+      await streamGroqChatAPI(text, apiKey, onChunk, onComplete, onError, modelConfig);
+    }
+  } catch (error) {
+    console.error('[AI] Ошибка streaming чата:', error);
+    onError(error);
+  }
+}
+
 // Проверка подключения к API
 export async function testAPIConnection(provider) {
   const settings = getAISettings();

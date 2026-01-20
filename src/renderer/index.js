@@ -28,6 +28,7 @@ import { scheduleUpdate, setOnScrollCallback as setPreviewScrollCallback, scroll
 import { initializeToolbar } from './modules/toolbar.js';
 import { initializeState } from './modules/state.js';
 import { initializeFileIO } from './modules/file-io.js';
+import { initializeAIChat } from './modules/ai-chat.js';
 
 // --- НОВАЯ, БОЛЕЕ НАДЕЖНАЯ ЛОГИКА СИНХРОНИЗАЦИИ ---
 
@@ -116,7 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeFileIO(editorView);
     console.timeEnd('FileIO Init');
 
-    console.log('[Renderer] 5. Setting up scroll sync...');
+    console.log('[Renderer] 5. Initializing AI Chat...');
+    console.time('AI Chat Init');
+    initializeAIChat();
+    console.timeEnd('AI Chat Init');
+
+    console.log('[Renderer] 6. Setting up scroll sync...');
     console.time('Scroll Sync Setup');
     setEditorScrollCallback(handleEditorScroll);
     setPreviewScrollCallback(handlePreviewScroll);
