@@ -424,6 +424,15 @@ async function handleSendMessage() {
   inputElement.value = '';
   adjustInputHeight();
 
+  // In editing mode, clear previous messages (keep welcome)
+  if (currentMode === 'editing' && messagesContainer) {
+    const welcomeMessage = messagesContainer.querySelector('.ai-chat-welcome');
+    messagesContainer.innerHTML = '';
+    if (welcomeMessage) {
+      messagesContainer.appendChild(welcomeMessage);
+    }
+  }
+
   // Add user message
   addMessage('user', message);
   updateChatHistoryReference(); // Update after adding message
@@ -561,8 +570,8 @@ async function callAIAPI(message, mode, selection = null) {
 function addMessage(role, content, isLoading = false) {
   if (!messagesContainer) return null;
 
-  // Remove welcome message if user sends first message
-  if (role === 'user') {
+  // Remove welcome message if user sends first message (only in chat mode)
+  if (role === 'user' && currentMode === 'chat') {
     const welcomeMessage = messagesContainer.querySelector('.ai-chat-welcome');
     if (welcomeMessage) {
       welcomeMessage.remove();
