@@ -234,8 +234,8 @@ let panelElement = null;
 let messagesContainer = null;
 let inputElement = null;
 let sendButton = null;
-let modeSelect = null;
-let statusElement = null;
+let modeChatBtn = null;
+let modeEditingBtn = null;
 let closeButton = null;
 
 // Initialize AI Chat
@@ -247,8 +247,8 @@ export function initializeAIChat() {
   messagesContainer = document.getElementById('ai-chat-messages');
   inputElement = document.getElementById('ai-chat-input');
   sendButton = document.getElementById('ai-chat-send');
-  modeSelect = document.getElementById('ai-chat-mode-select');
-  statusElement = document.getElementById('ai-chat-status-text');
+  modeChatBtn = document.getElementById('mode-chat');
+  modeEditingBtn = document.getElementById('mode-editing');
   closeButton = document.getElementById('ai-chat-close');
 
   if (!panelElement || !messagesContainer || !inputElement) {
@@ -258,6 +258,9 @@ export function initializeAIChat() {
 
   // Load conversations from localStorage
   loadConversations();
+
+  // Update mode button states
+  updateModeButtons();
 
   // Setup event listeners
   setupEventListeners();
@@ -331,31 +334,37 @@ function setupEventListeners() {
     inputElement.addEventListener('input', adjustInputHeight);
   }
 
-  // Mode select
-  if (modeSelect) {
-    modeSelect.addEventListener('change', (e) => {
-      const newMode = e.target.value;
-      currentMode = newMode;
-      updateStatus();
+  // Mode buttons
+  if (modeChatBtn) {
+    modeChatBtn.addEventListener('click', () => {
+      if (currentMode === 'chat') return;
+      currentMode = 'chat';
+      updateModeButtons();
 
-      if (newMode === 'editing') {
-        // Clear messages for editing mode
-        if (messagesContainer) {
-          messagesContainer.innerHTML = '';
-          const welcomeMessage = document.createElement('div');
-          welcomeMessage.className = 'ai-chat-welcome';
-          welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий (щелкните для быстрого применения):</strong><br>• <button onclick="window.sendExampleMessage('Проверь и исправь синтаксис Markdown')" class="ai-example-btn">Проверь и исправь синтаксис Markdown</button><br>• <button onclick="window.sendExampleMessage('Переведи текст на английский')" class="ai-example-btn">Переведи текст на английский</button><br>• <button onclick="window.sendExampleMessage('Исправь ошибки и улучши стиль')" class="ai-example-btn">Исправь ошибки и улучши стиль</button><br>• <button onclick="window.sendExampleMessage('Проверь пунктуацию и грамматику')" class="ai-example-btn">Проверь пунктуацию и грамматику</button><br>• <button onclick="window.sendExampleMessage('Сократи текст до 200 слов')" class="ai-example-btn">Сократи текст до 200 слов</button><br>• <button onclick="window.sendExampleMessage('Перепиши в более формальном стиле')" class="ai-example-btn">Перепиши в более формальном стиле</button><br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
-          messagesContainer.appendChild(welcomeMessage);
-        }
-      } else if (newMode === 'chat') {
-        // Switch to last chat conversation
-        const chatConv = conversations.find(conv => conv.messages.some(msg => msg.mode === 'chat'));
-        if (chatConv) {
-          loadConversation(chatConv.id);
-        } else {
-          // If no chat conversations, create new
-          createNewConversation();
-        }
+      // Switch to last chat conversation
+      const chatConv = conversations.find(conv => conv.messages.some(msg => msg.mode === 'chat'));
+      if (chatConv) {
+        loadConversation(chatConv.id);
+      } else {
+        // If no chat conversations, create new
+        createNewConversation();
+      }
+    });
+  }
+
+  if (modeEditingBtn) {
+    modeEditingBtn.addEventListener('click', () => {
+      if (currentMode === 'editing') return;
+      currentMode = 'editing';
+      updateModeButtons();
+
+      // Clear messages for editing mode
+      if (messagesContainer) {
+        messagesContainer.innerHTML = '';
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.className = 'ai-chat-welcome';
+        welcomeMessage.innerHTML = `<div class="ai-message ai-message-assistant"><div class="ai-message-avatar">🤖</div><div class="ai-message-content"><p><strong>Режим редактирования</strong><br><br>В этом режиме я могу помогать с изменением текста в вашем Markdown-редакторе. Есть два варианта работы:<br><br>1. <strong>По умолчанию</strong>: задание применяется ко всему тексту в редакторе<br>2. <strong>Для части текста</strong>: выделите нужный фрагмент, затем введите задание - изменения будут применены только к выделенному тексту<br><br><strong>Примеры заданий (щелкните для быстрого применения):</strong><br>• <button onclick="window.sendExampleMessage('Проверь и исправь синтаксис Markdown')" class="ai-example-btn">Проверь и исправь синтаксис Markdown</button><br>• <button onclick="window.sendExampleMessage('Переведи текст на английский')" class="ai-example-btn">Переведи текст на английский</button><br>• <button onclick="window.sendExampleMessage('Исправь ошибки и улучши стиль')" class="ai-example-btn">Исправь ошибки и улучши стиль</button><br>• <button onclick="window.sendExampleMessage('Проверь пунктуацию и грамматику')" class="ai-example-btn">Проверь пунктуацию и грамматику</button><br>• <button onclick="window.sendExampleMessage('Сократи текст до 200 слов')" class="ai-example-btn">Сократи текст до 200 слов</button><br>• <button onclick="window.sendExampleMessage('Перепиши в более формальном стиле')" class="ai-example-btn">Перепиши в более формальном стиле</button><br><br>Просто введите ваше задание и я применю изменения автоматически.</p></div></div>`;
+        messagesContainer.appendChild(welcomeMessage);
       }
     });
   }
@@ -720,19 +729,19 @@ function setLoading(loading) {
   updateStatus();
 }
 
-// Update status text
-function updateStatus() {
-  if (!statusElement) return;
-
-  if (isLoading) {
-    statusElement.textContent = 'Думаю...';
-  } else {
-    const modeNames = {
-      'chat': 'Чат',
-      'editing': 'Редактирование'
-    };
-    statusElement.textContent = `Режим: ${modeNames[currentMode] || 'Неизвестный'}`;
+// Update mode button states
+function updateModeButtons() {
+  if (modeChatBtn) {
+    modeChatBtn.classList.toggle('active', currentMode === 'chat');
   }
+  if (modeEditingBtn) {
+    modeEditingBtn.classList.toggle('active', currentMode === 'editing');
+  }
+}
+
+// Update status (no-op since status element removed)
+function updateStatus() {
+  // Status display removed, keeping function for compatibility
 }
 
 // Save chat history to localStorage
