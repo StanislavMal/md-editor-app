@@ -76,6 +76,52 @@
   display: flex;
   width: 100%;
   height: calc(100vh - var(--toolbar-height) - var(--title-bar-height));
+  position: relative;
+}
+
+/* Боковая панель переключения AI Chat */
+.ai-chat-toggle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.ai-chat-toggle:hover {
+  opacity: 1;
+  background: var(--color-accent-muted);
+}
+
+.ai-chat-toggle:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.ai-chat-toggle .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-fg-default);
+}
+
+[data-theme="dark"] .ai-chat-toggle {
+  background: var(--color-canvas-subtle);
+  border-color: var(--color-border-default);
+}
+
+[data-theme="dark"] .ai-chat-toggle:hover {
+  background: var(--color-accent-muted);
 }
 
 /* Панель редактора */

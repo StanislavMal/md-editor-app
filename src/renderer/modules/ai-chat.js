@@ -53,10 +53,16 @@ export function initializeAIChat() {
 
 // Setup event listeners
 function setupEventListeners() {
-  // Toggle panel button
+  // Toggle panel button (toolbar)
   const toggleButton = document.getElementById('btn-ai-chat');
   if (toggleButton) {
     toggleButton.addEventListener('click', togglePanel);
+  }
+
+  // Toggle panel button (side)
+  const sideToggleButton = document.getElementById('ai-chat-toggle');
+  if (sideToggleButton) {
+    sideToggleButton.addEventListener('click', togglePanel);
   }
 
   // Close button
@@ -89,13 +95,7 @@ function setupEventListeners() {
     });
   }
 
-  // Click outside to close
-  document.addEventListener('click', (e) => {
-    if (isPanelOpen && panelElement && !panelElement.contains(e.target) &&
-        e.target.id !== 'btn-ai-chat' && !e.target.closest('#btn-ai-chat')) {
-      closePanel();
-    }
-  });
+  // No more auto-hide on click outside - panel stays open until explicitly closed
 }
 
 // Setup keyboard shortcuts
