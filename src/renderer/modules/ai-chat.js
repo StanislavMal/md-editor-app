@@ -380,8 +380,8 @@ function setupEventListeners() {
 // Setup keyboard shortcuts
 function setupKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
-    // Ctrl+Shift+A to toggle AI chat
-    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+    // Ctrl+Shift+A to toggle AI chat (works in both English and Russian layouts)
+    if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.code === 'KeyA')) {
       e.preventDefault();
       togglePanel();
     }

@@ -62,15 +62,15 @@ export function initializeToolbar(editorView) {
 
   // --- Глобальные горячие клавиши ---
   document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key.toLowerCase() === 'p') {
+    if (e.ctrlKey && (e.key.toLowerCase() === 'p' || e.code === 'KeyP')) {
       e.preventDefault();
       togglePreview(editorView);
     }
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+    if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'd' || e.code === 'KeyD')) {
       e.preventDefault();
       toggleTheme();
     }
-    if (e.ctrlKey && e.key.toLowerCase() === 's') {
+    if (e.ctrlKey && (e.key.toLowerCase() === 's' || e.code === 'KeyS')) {
       e.preventDefault();
       handleQuickSave();
     }
