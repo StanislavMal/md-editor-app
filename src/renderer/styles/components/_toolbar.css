@@ -6,8 +6,9 @@
   left: 0;
   width: 100%;
   height: var(--toolbar-height);
-  background: var(--color-toolbar-bg);
+  background: var(--color-toolbar-gradient);
   border-bottom: 1px solid var(--color-border-muted);
+  box-shadow: var(--shadow-toolbar, 0 2px 8px rgba(0, 0, 0, 0.08));
   display: flex;
   align-items: center;
   justify-content: space-between;
