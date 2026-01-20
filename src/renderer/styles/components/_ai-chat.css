@@ -395,9 +395,100 @@
   background: var(--success-hover-dark, #218838);
 }
 
+/* Conversation History Dropdown */
+.ai-chat-history-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 350px;
+}
+
+[data-theme="dark"] .ai-chat-history-dropdown {
+  background: var(--bg-color-dark, #1e1e1e);
+  border-color: var(--border-color-dark, #3e3e42);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ai-chat-history-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color, #e1e5e9);
+  transition: background-color 0.2s ease;
+}
+
+.ai-chat-history-item:last-child {
+  border-bottom: none;
+}
+
+.ai-chat-history-item:hover {
+  background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+[data-theme="dark"] .ai-chat-history-item:hover {
+  background: var(--hover-bg-dark, rgba(255, 255, 255, 0.1));
+}
+
+.ai-chat-history-item.active {
+  background: var(--accent-color-light, rgba(0, 123, 255, 0.1));
+  border-left: 3px solid var(--accent-color, #007bff);
+}
+
+[data-theme="dark"] .ai-chat-history-item.active {
+  background: var(--accent-color-light-dark, rgba(0, 123, 255, 0.2));
+}
+
+.ai-chat-history-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-color, #212529);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .ai-chat-history-title {
+  color: var(--text-color-dark, #cccccc);
+}
+
+.ai-chat-history-meta {
+  font-size: 11px;
+  color: var(--text-color-secondary, #6c757d);
+  margin-bottom: 4px;
+}
+
+[data-theme="dark"] .ai-chat-history-meta {
+  color: var(--text-color-secondary-dark, #cccccc);
+}
+
+.ai-chat-history-preview {
+  font-size: 12px;
+  color: var(--text-color-secondary, #6c757d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .ai-chat-history-preview {
+  color: var(--text-color-secondary-dark, #cccccc);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .ai-chat-panel {
     width: 100vw;
+  }
+
+  .ai-chat-history-dropdown {
+    min-width: 280px;
+    max-width: 320px;
   }
 }

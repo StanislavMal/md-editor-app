@@ -298,6 +298,17 @@
           <span>AI Чат</span>
         </div>
         <div class="ai-chat-controls">
+          <button id="ai-chat-history" class="ai-chat-btn" title="Журнал диалогов">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V4H3v1.5a.5.5 0 0 1-1 0v-1zM2.5 7a.5.5 0 0 0 0 1h6.5a.5.5 0 0 0 0-1H2.5zm0 3a.5.5 0 0 0 0 1h6.5a.5.5 0 0 0 0-1H2.5zM14 14V6H2v8h12z"/>
+              <path d="M1 13.5V6a.5.5 0 0 1 .5-.5H14a.5.5 0 0 1 .5.5v7.5a.5.5 0 0 1-.5.5H1a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+          </button>
+          <button id="ai-chat-new" class="ai-chat-btn" title="Новый диалог">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+            </svg>
+          </button>
           <button id="ai-chat-close" class="ai-chat-btn" title="Закрыть">
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 0 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 0 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/>
@@ -309,9 +320,7 @@
       <div class="ai-chat-modes">
         <select id="ai-chat-mode-select" class="ai-chat-mode-select">
           <option value="chat">💬 Чат</option>
-          <option value="edit-selected">✏️ Редакция выделенного</option>
-          <option value="fix-syntax">🔧 Исправление MD-синтаксиса</option>
-          <option value="creative">🎨 Творческий режим</option>
+          <option value="editing">✏️ Редактирование</option>
         </select>
       </div>
 

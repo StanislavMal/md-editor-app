@@ -7,10 +7,178 @@ import { chatWithAIStreaming } from './ai.js';
 console.log('[Module Loaded] ai-chat.js');
 
 // Chat state
-let chatHistory = [];
+let conversations = [];
+let currentConversationId = null;
 let currentMode = 'chat';
 let isPanelOpen = false;
 let isLoading = false;
+
+// For backward compatibility - points to current conversation messages
+let chatHistory = [];
+
+// Helper to get current conversation
+function getCurrentConversation() {
+  return conversations.find(conv => conv.id === currentConversationId);
+}
+
+// Helper to get current chat history (messages of current conversation)
+function getCurrentChatHistory() {
+  const currentConv = getCurrentConversation();
+  return currentConv ? currentConv.messages : [];
+}
+
+// Update chatHistory reference
+function updateChatHistoryReference() {
+  chatHistory = getCurrentChatHistory();
+}
+
+// Create new conversation
+function createNewConversation() {
+  const conversationId = `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const newConversation = {
+    id: conversationId,
+    title: 'Новый диалог',
+    messages: [],
+    timestamp: Date.now()
+  };
+
+  conversations.unshift(newConversation); // Add to beginning
+  currentConversationId = conversationId;
+  updateChatHistoryReference();
+
+  // Update title if we have first message
+  if (conversations.length > 10) {
+    conversations = conversations.slice(0, 10); // Keep only 10
+  }
+
+  renderMessages();
+  saveConversations();
+  updatePanelTitle();
+}
+
+// Load conversation by ID
+function loadConversation(conversationId) {
+  const conversation = conversations.find(conv => conv.id === conversationId);
+  if (conversation) {
+    currentConversationId = conversationId;
+    updateChatHistoryReference();
+    renderMessages();
+    updatePanelTitle();
+  }
+}
+
+// Save conversations to localStorage
+function saveConversations() {
+  try {
+    localStorage.setItem('ai-chat-conversations', JSON.stringify(conversations));
+  } catch (error) {
+    console.warn('[AI Chat] Failed to save conversations:', error);
+  }
+}
+
+// Load conversations from localStorage
+function loadConversations() {
+  try {
+    const saved = localStorage.getItem('ai-chat-conversations');
+    if (saved) {
+      conversations = JSON.parse(saved);
+      // Ensure we have at least one conversation
+      if (conversations.length === 0) {
+        createNewConversation();
+      } else {
+        // Load last conversation or create new if none
+        if (!currentConversationId || !conversations.find(conv => conv.id === currentConversationId)) {
+          currentConversationId = conversations[0].id;
+        }
+        updateChatHistoryReference();
+      }
+    } else {
+      // No saved conversations, create new
+      createNewConversation();
+    }
+  } catch (error) {
+    console.warn('[AI Chat] Failed to load conversations:', error);
+    conversations = [];
+    createNewConversation();
+  }
+}
+
+// Update conversation title based on first user message
+function updateConversationTitle() {
+  const currentConv = getCurrentConversation();
+  if (currentConv && currentConv.title === 'Новый диалог' && chatHistory.length > 0) {
+    const firstUserMessage = chatHistory.find(msg => msg.role === 'user');
+    if (firstUserMessage) {
+      currentConv.title = firstUserMessage.content.length > 50
+        ? firstUserMessage.content.substring(0, 50) + '...'
+        : firstUserMessage.content;
+      updatePanelTitle();
+      saveConversations();
+    }
+  }
+}
+
+// Update panel title
+function updatePanelTitle() {
+  const titleElement = document.querySelector('.ai-chat-title span');
+  if (titleElement) {
+    const currentConv = getCurrentConversation();
+    titleElement.textContent = currentConv ? currentConv.title : 'AI Чат';
+  }
+}
+
+// Show conversation history dropdown
+function showConversationHistory() {
+  // Remove existing dropdown
+  const existingDropdown = document.querySelector('.ai-chat-history-dropdown');
+  if (existingDropdown) {
+    existingDropdown.remove();
+    return;
+  }
+
+  // Create dropdown
+  const dropdown = document.createElement('div');
+  dropdown.className = 'ai-chat-history-dropdown';
+
+  // Add conversations
+  conversations.forEach((conv, index) => {
+    const item = document.createElement('div');
+    item.className = `ai-chat-history-item${conv.id === currentConversationId ? ' active' : ''}`;
+    item.onclick = () => {
+      loadConversation(conv.id);
+      dropdown.remove();
+    };
+
+    const date = new Date(conv.timestamp).toLocaleString();
+    const preview = conv.messages.length > 0
+      ? conv.messages.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || 'Пустой диалог'
+      : 'Пустой диалог';
+
+    item.innerHTML = `
+      <div class="ai-chat-history-title">${conv.title}</div>
+      <div class="ai-chat-history-meta">${date} • ${conv.messages.length} сообщений</div>
+      <div class="ai-chat-history-preview">${preview}</div>
+    `;
+
+    dropdown.appendChild(item);
+  });
+
+  // Add to header
+  const header = document.querySelector('.ai-chat-header');
+  if (header) {
+    header.appendChild(dropdown);
+
+    // Close on click outside
+    setTimeout(() => {
+      document.addEventListener('click', function closeDropdown(e) {
+        if (!dropdown.contains(e.target) && !e.target.closest('#ai-chat-history')) {
+          dropdown.remove();
+          document.removeEventListener('click', closeDropdown);
+        }
+      });
+    }, 0);
+  }
+}
 
 // DOM elements
 let panelElement = null;
@@ -39,8 +207,8 @@ export function initializeAIChat() {
     return;
   }
 
-  // Load chat history from localStorage
-  loadChatHistory();
+  // Load conversations from localStorage
+  loadConversations();
 
   // Setup event listeners
   setupEventListeners();
@@ -63,6 +231,18 @@ function setupEventListeners() {
   const sideToggleButton = document.getElementById('ai-chat-toggle');
   if (sideToggleButton) {
     sideToggleButton.addEventListener('click', togglePanel);
+  }
+
+  // History button
+  const historyButton = document.getElementById('ai-chat-history');
+  if (historyButton) {
+    historyButton.addEventListener('click', showConversationHistory);
+  }
+
+  // New conversation button
+  const newButton = document.getElementById('ai-chat-new');
+  if (newButton) {
+    newButton.addEventListener('click', createNewConversation);
   }
 
   // Close button
@@ -162,11 +342,14 @@ async function handleSendMessage() {
   // Add user message
   addMessage('user', message);
 
+  // Update conversation title if needed
+  updateConversationTitle();
+
   // Process message based on mode
   await processMessage(message);
 
-  // Save history
-  saveChatHistory();
+  // Save conversations
+  saveConversations();
 }
 
 // Process message based on current mode
@@ -178,14 +361,8 @@ async function processMessage(message) {
       case 'chat':
         await handleChatMode(message);
         break;
-      case 'edit-selected':
-        await handleEditSelectedMode(message);
-        break;
-      case 'fix-syntax':
-        await handleFixSyntaxMode(message);
-        break;
-      case 'creative':
-        await handleCreativeMode(message);
+      case 'editing':
+        await handleEditingMode(message);
         break;
       default:
         await handleChatMode(message);
@@ -203,8 +380,8 @@ async function handleChatMode(message) {
   await callAIAPI(message, 'general');
 }
 
-// Handle edit selected mode
-async function handleEditSelectedMode(message) {
+// Handle editing mode
+async function handleEditingMode(message) {
   const editor = getEditorView();
   if (!editor) {
     addMessage('assistant', 'Редактор не найден');
@@ -212,36 +389,26 @@ async function handleEditSelectedMode(message) {
   }
 
   const selection = editor.state.selection.main;
-  if (selection.from === selection.to) {
-    addMessage('assistant', 'Выделите текст в редакторе для редактирования');
-    return;
+  const hasSelection = selection.from !== selection.to;
+
+  let textToEdit, prompt, modeSelection;
+
+  if (hasSelection) {
+    // Edit selected text
+    textToEdit = editor.state.doc.sliceString(selection.from, selection.to);
+    prompt = `Редактируй следующий выделенный текст согласно инструкции: "${message}"\n\nТекст для редактирования:\n${textToEdit}`;
+    modeSelection = selection;
+  } else {
+    // Edit entire document content
+    textToEdit = editor.state.doc.toString();
+    prompt = `Редактируй весь следующий текст согласно инструкции: "${message}"\n\nТекст для редактирования:\n${textToEdit}`;
+    modeSelection = { from: 0, to: textToEdit.length };
   }
 
-  const selectedText = editor.state.doc.sliceString(selection.from, selection.to);
-  const prompt = `Редактируй следующий выделенный текст согласно инструкции: "${message}"\n\nТекст для редактирования:\n${selectedText}`;
-
-  await callAIAPI(prompt, 'edit', selection);
+  await callAIAPI(prompt, 'edit', modeSelection);
 }
 
-// Handle fix syntax mode
-async function handleFixSyntaxMode(message) {
-  const editor = getEditorView();
-  if (!editor) {
-    addMessage('assistant', 'Редактор не найден');
-    return;
-  }
 
-  const fullText = editor.state.doc.toString();
-  const prompt = `Исправь ошибки синтаксиса Markdown в следующем тексте. Верни только исправленный текст:\n\n${fullText}`;
-
-  await callAIAPI(prompt, 'fix-syntax');
-}
-
-// Handle creative mode
-async function handleCreativeMode(message) {
-  const prompt = `Творческий режим: ${message}`;
-  await callAIAPI(prompt, 'creative');
-}
 
 // Call AI API with streaming
 async function callAIAPI(message, mode, selection = null) {
@@ -305,14 +472,17 @@ function addMessage(role, content, isLoading = false) {
   // Scroll to bottom
   scrollToBottom();
 
-  // Add to history
-  chatHistory.push({
-    id: messageId,
-    role,
-    content,
-    timestamp: Date.now(),
-    mode: currentMode
-  });
+  // Add to current conversation
+  const currentConv = getCurrentConversation();
+  if (currentConv) {
+    currentConv.messages.push({
+      id: messageId,
+      role,
+      content,
+      timestamp: Date.now(),
+      mode: currentMode
+    });
+  }
 
   return messageId;
 }
@@ -423,9 +593,7 @@ function updateStatus() {
   } else {
     const modeNames = {
       'chat': 'Чат',
-      'edit-selected': 'Редакция выделенного',
-      'fix-syntax': 'Исправление синтаксиса',
-      'creative': 'Творческий режим'
+      'editing': 'Редактирование'
     };
     statusElement.textContent = `Режим: ${modeNames[currentMode] || 'Неизвестный'}`;
   }
