@@ -185,7 +185,8 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, mod
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept-Charset': 'utf-8'
       },
       body: JSON.stringify({
         model: modelConfig.id,
@@ -204,13 +205,36 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, mod
     }
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
+        // Финализируем декодирование для обработки оставшихся байтов
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          const lines = finalChunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              if (jsonStr === '[DONE]') {
+                onComplete(cleanMarkdownWrapper(accumulatedText));
+                return;
+              }
+              try {
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedText += content;
+                }
+              } catch (e) {
+                // Игнорируем невалидный JSON
+              }
+            }
+          }
+        }
         onComplete(cleanMarkdownWrapper(accumulatedText));
         break;
       }
@@ -253,7 +277,8 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError, model
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept-Charset': 'utf-8'
       },
       body: JSON.stringify({
         model: modelConfig.id,
@@ -272,13 +297,36 @@ async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError, model
     }
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
+        // Финализируем декодирование для обработки оставшихся байтов
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          const lines = finalChunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              if (jsonStr === '[DONE]') {
+                onComplete(cleanMarkdownWrapper(accumulatedText));
+                return;
+              }
+              try {
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedText += content;
+                }
+              } catch (e) {
+                // Игнорируем невалидный JSON
+              }
+            }
+          }
+        }
         onComplete(cleanMarkdownWrapper(accumulatedText));
         break;
       }
@@ -538,7 +586,8 @@ async function streamDeepSeekChatAPI(messages, apiKey, onChunk, onComplete, onEr
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept-Charset': 'utf-8'
       },
       body: JSON.stringify({
         model: modelConfig.id,
@@ -554,13 +603,36 @@ async function streamDeepSeekChatAPI(messages, apiKey, onChunk, onComplete, onEr
     }
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
+        // Финализируем декодирование для обработки оставшихся байтов
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          const lines = finalChunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              if (jsonStr === '[DONE]') {
+                onComplete(accumulatedText);
+                return;
+              }
+              try {
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedText += content;
+                }
+              } catch (e) {
+                // Игнорируем невалидный JSON
+              }
+            }
+          }
+        }
         onComplete(accumulatedText);
         break;
       }
@@ -602,7 +674,8 @@ async function streamGeminiChatAPI(messages, apiKey, onChunk, onComplete, onErro
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept-Charset': 'utf-8'
       },
       body: JSON.stringify({
         model: modelConfig.id,
@@ -618,13 +691,36 @@ async function streamGeminiChatAPI(messages, apiKey, onChunk, onComplete, onErro
     }
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
+        // Финализируем декодирование для обработки оставшихся байтов
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          const lines = finalChunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              if (jsonStr === '[DONE]') {
+                onComplete(accumulatedText);
+                return;
+              }
+              try {
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedText += content;
+                }
+              } catch (e) {
+                // Игнорируем невалидный JSON
+              }
+            }
+          }
+        }
         onComplete(accumulatedText);
         break;
       }
