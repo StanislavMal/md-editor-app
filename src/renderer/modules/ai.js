@@ -101,6 +101,13 @@ function cleanMarkdownWrapper(text) {
   return text;
 }
 
+// Очистка текста от символов замены и других артефактов кодировки
+function cleanTextArtifacts(text) {
+  if (!text) return text;
+  // Удаляем символы замены Unicode
+  return text.replace(/\uFFFD/g, '').trim();
+}
+
 // Разделение текста на логические части
 function splitTextIntoChunks(text, maxLength = 4000) {
   if (text.length <= maxLength) {
@@ -210,7 +217,7 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
         accumulatedText += content;
         onChunk(accumulatedText);
       }
-      onComplete(provider === 'deepseek' || provider === 'gemini' ? cleanMarkdownWrapper(accumulatedText) : accumulatedText);
+      onComplete(cleanTextArtifacts(provider === 'deepseek' || provider === 'gemini' ? cleanMarkdownWrapper(accumulatedText) : accumulatedText));
       return;
     }
 
@@ -220,8 +227,7 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept-Charset': 'utf-8'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: modelConfig.id,
@@ -239,31 +245,38 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let accumulatedText = '';
+    let buffer = []; // Буфер для накопления всех байтов
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
-        // Финализируем декодирование для обработки оставшихся байтов
-        const finalChunk = decoder.decode();
-        if (finalChunk) {
-          const lines = finalChunk.split('\n').filter(line => line.trim());
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6);
-              if (jsonStr === '[DONE]') {
-                onComplete(cleanMarkdownWrapper(accumulatedText));
-                return;
+        // Финализируем декодирование всех накопленных байтов
+        const allBytes = new Uint8Array(buffer.reduce((acc, chunk) => acc + chunk.length, 0));
+        let offset = 0;
+        for (const chunk of buffer) {
+          allBytes.set(chunk, offset);
+          offset += chunk.length;
+        }
+        const finalText = decoder.decode(allBytes);
+
+        // Парсим финальный текст
+        const lines = finalText.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            if (jsonStr === '[DONE]') {
+        onComplete(cleanTextArtifacts(cleanMarkdownWrapper(accumulatedText)));
+              return;
+            }
+            try {
+              const data = JSON.parse(jsonStr);
+              const content = data.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulatedText += content;
               }
-              try {
-                const data = JSON.parse(jsonStr);
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  accumulatedText += content;
-                }
-              } catch (e) {
-                // Игнорируем невалидный JSON
-              }
+            } catch (e) {
+              // Игнорируем невалидный JSON
             }
           }
         }
@@ -271,6 +284,10 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
         break;
       }
 
+      // Накопляем байты
+      buffer.push(value);
+
+      // Декодируем для промежуточных обновлений с stream: true
       const chunk = decoder.decode(value, { stream: true });
       const lines = chunk.split('\n').filter(line => line.trim());
 
@@ -431,7 +448,7 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
-      onComplete(results.join('\n\n'));
+      onComplete(cleanTextArtifacts(results.join('\n\n')));
     }
   } catch (error) {
     console.error('[AI] Ошибка streaming форматирования:', error);
@@ -453,7 +470,7 @@ async function callDeepSeekChatAPI(text, apiKey, modelConfig) {
     }
   });
 
-  return response.data.choices[0].message.content;
+  return cleanTextArtifacts(response.data.choices[0].message.content);
 }
 
 // Вызов Gemini API для общего чата
@@ -470,7 +487,7 @@ async function callGeminiChatAPI(text, apiKey, modelConfig) {
     }
   });
 
-  return response.data.choices[0].message.content;
+  return cleanTextArtifacts(response.data.choices[0].message.content);
 }
 
 // Вызов Groq API для общего чата
@@ -490,7 +507,7 @@ async function callGroqChatAPI(text, apiKey, modelConfig) {
     stop: null
   });
 
-  return completion.choices[0].message.content;
+  return cleanTextArtifacts(completion.choices[0].message.content);
 }
 
 // Streaming DeepSeek для общего чата
