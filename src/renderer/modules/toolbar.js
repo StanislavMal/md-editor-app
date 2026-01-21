@@ -125,20 +125,31 @@ function handleAIFormat(editorView) {
     return;
   }
 
-  const text = editorView.state.doc.toString().trim();
+  // Проверяем, есть ли выделенный текст
+  const hasSelection = editorView.state.selection.ranges.some(range => !range.empty);
+  let text;
+
+  if (hasSelection) {
+    // Используем только выделенный текст
+    const range = editorView.state.selection.main;
+    text = editorView.state.sliceDoc(range.from, range.to).trim();
+  } else {
+    // Используем весь текст документа
+    text = editorView.state.doc.toString().trim();
+  }
 
   if (!text) {
     alert('Нет текста для форматирования. Введите текст в редактор.');
     return;
   }
 
-  startGeneration(editorView, text);
+  startGeneration(editorView, text, hasSelection);
 }
 
 /**
  * Начинает генерацию текста
  */
-function startGeneration(editorView, text) {
+function startGeneration(editorView, text, hasSelection) {
   isGenerating = true;
   abortController = new AbortController();
 
@@ -153,19 +164,39 @@ function startGeneration(editorView, text) {
 
   console.log('[AI] Начинаем streaming форматирование текста...');
 
+  const range = hasSelection ? editorView.state.selection.main : null;
+  let textBefore = '';
+  let textAfter = '';
+  let insertPosition = 0;
+
+  if (hasSelection) {
+    // Сохраняем текст до и после выделения
+    textBefore = editorView.state.doc.sliceString(0, range.from);
+    textAfter = editorView.state.doc.sliceString(range.to, editorView.state.doc.length);
+    insertPosition = range.from;
+
+    // Удаляем выделенный текст
+    editorView.dispatch({
+      changes: { from: range.from, to: range.to, insert: '' }
+    });
+  }
+
   formatTextWithAIStreaming(
     text,
     // onChunk - вызывается при получении очередного кусочка текста
     (chunkText) => {
       if (abortController.signal.aborted) return;
 
+      const fullText = hasSelection ? textBefore + chunkText + textAfter : chunkText;
+
+      // Заменяем весь документ
       editorView.dispatch({
         changes: {
           from: 0,
           to: editorView.state.doc.length,
-          insert: chunkText
+          insert: fullText
         },
-        selection: { anchor: chunkText.length }
+        selection: { anchor: hasSelection ? textBefore.length + chunkText.length : chunkText.length }
       });
     },
     // onComplete - вызывается при завершении генерации
@@ -180,7 +211,14 @@ function startGeneration(editorView, text) {
       if (abortController.signal.aborted) return;
 
       console.error('[AI] Ошибка streaming форматирования:', error);
-      alert(`Ошибка AI форматирования: ${error.message}`);
+      console.error('[AI] Детали ошибки:', {
+        message: error.message,
+        stack: error.stack,
+        hasSelection,
+        textLength: text.length,
+        text: text.substring(0, 100) + (text.length > 100 ? '...' : '')
+      });
+      alert(`Ошибка AI форматирования: ${error.message || 'Неизвестная ошибка'}`);
       stopGeneration();
     }
   );
@@ -198,9 +236,8 @@ function stopGeneration() {
   abortController = null;
 
   const aiButton = document.getElementById('btn-ai-format');
-  const originalHTML = '<svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0 0 2.22c1.58-.64 3.129-.82 4.186-.82s2.606.18 4.186.82a1.54 1.54 0 0 0 0-2.22c-.658-.215-1.777-.57-2.887-.87C9.843.266 8.69 0 8 0zM5.264 1.441c.646-.311 1.353-.441 2.736-.441s2.09.13 2.736.44l.783.38c.68.329 1.059.497 1.659.741.601.246 1.305.49 2.049.679A1.5 1.5 0 0 1 16 5.53c0 .449-.131.807-.508 1.07-.377.265-.91.43-1.514.511a3.746 3.746 0 0 1-.666.082c-.551 0-1.057-.062-1.47-.104a3.75 3.75 0 0 1-1.026-.25c-.595-.283-1.267-.465-2.041-.465s-1.446.182-2.041.465a3.75 3.75 0 0 1-1.026.25c-.413.042-.919.104-1.47.104a3.746 3.746 0 0 1-.666-.082c-.604-.08-1.137-.246-1.514-.511A1.495 1.495 0 0 1 0 5.53a1.5 1.5 0 0 1 1.076-1.408c.744-.189 1.448-.433 2.049-.679.6-.244.979-.412 1.659-.741l.783-.38z"/><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg>';
 
-  aiButton.innerHTML = originalHTML;
+  aiButton.innerHTML = 'AI';
   aiButton.title = 'Форматировать текст через AI (MD AI)';
   aiButton.style.backgroundColor = '';
   aiButton.style.color = '';
