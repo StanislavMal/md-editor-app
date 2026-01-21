@@ -274,6 +274,12 @@ export function initializeAIChat() {
   // Setup keyboard shortcuts
   setupKeyboardShortcuts();
 
+  // Initialize context menu
+  initializeContextMenu();
+
+  // Setup context menu handlers
+  setupContextMenuHandlers();
+
   // Setup global function for example buttons
   window.sendExampleMessage = (message) => {
     if (inputElement) {
@@ -839,4 +845,165 @@ export function getChatStats() {
 // Get panel open state
 export function getPanelOpenState() {
   return isPanelOpen;
+}
+
+// Context Menu functionality
+let contextMenuElement = null;
+let contextMenuTarget = null;
+
+// Initialize context menu
+function initializeContextMenu() {
+  // Create context menu element
+  contextMenuElement = document.createElement('div');
+  contextMenuElement.className = 'ai-context-menu';
+  contextMenuElement.style.display = 'none';
+  document.body.appendChild(contextMenuElement);
+
+  // Hide menu on click outside
+  document.addEventListener('click', hideContextMenu);
+  document.addEventListener('contextmenu', (e) => {
+    if (!e.target.closest('.ai-chat-panel')) {
+      hideContextMenu();
+    }
+  });
+}
+
+// Show context menu
+function showContextMenu(x, y, target) {
+  if (!contextMenuElement) return;
+
+  contextMenuTarget = target;
+
+  // Clear previous menu items
+  contextMenuElement.innerHTML = '';
+
+  // Determine if target is input field or message content
+  const isInput = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT';
+  const hasSelection = isInput ?
+    (target.selectionStart !== target.selectionEnd) :
+    (window.getSelection().toString().length > 0);
+
+  // Copy option (always available if there's selection or content)
+  const canCopy = hasSelection || (!isInput && target.textContent.trim().length > 0);
+  if (canCopy) {
+    addContextMenuItem('Копировать', () => handleCopy(target, isInput));
+  }
+
+  // Cut option (only for input fields with selection)
+  if (isInput && hasSelection) {
+    addContextMenuItem('Вырезать', () => handleCut(target));
+  }
+
+  // Paste option (only for input fields)
+  if (isInput) {
+    addContextMenuItem('Вставить', () => handlePaste(target));
+  }
+
+  // Position menu
+  contextMenuElement.style.left = x + 'px';
+  contextMenuElement.style.top = y + 'px';
+  contextMenuElement.style.display = 'block';
+
+  // Adjust position if menu goes off screen
+  const rect = contextMenuElement.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    contextMenuElement.style.left = (x - rect.width) + 'px';
+  }
+  if (rect.bottom > window.innerHeight) {
+    contextMenuElement.style.top = (y - rect.height) + 'px';
+  }
+}
+
+// Hide context menu
+function hideContextMenu() {
+  if (contextMenuElement) {
+    contextMenuElement.style.display = 'none';
+    contextMenuTarget = null;
+  }
+}
+
+// Add menu item
+function addContextMenuItem(text, callback) {
+  const item = document.createElement('button');
+  item.className = 'ai-context-menu-item';
+  item.textContent = text;
+  item.onclick = () => {
+    callback();
+    hideContextMenu();
+  };
+  contextMenuElement.appendChild(item);
+}
+
+// Handle copy operation
+function handleCopy(target, isInput) {
+  if (isInput) {
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    const selectedText = target.value.substring(start, end);
+    if (selectedText) {
+      navigator.clipboard.writeText(selectedText);
+    }
+  } else {
+    const selection = window.getSelection();
+    if (selection.toString()) {
+      navigator.clipboard.writeText(selection.toString());
+    } else {
+      // Copy all content if no selection
+      navigator.clipboard.writeText(target.textContent);
+    }
+  }
+}
+
+// Handle cut operation
+function handleCut(target) {
+  const start = target.selectionStart;
+  const end = target.selectionEnd;
+  const selectedText = target.value.substring(start, end);
+  if (selectedText) {
+    navigator.clipboard.writeText(selectedText);
+    // Remove selected text
+    target.value = target.value.substring(0, start) + target.value.substring(end);
+    target.selectionStart = target.selectionEnd = start;
+    // Trigger input event for height adjustment
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+// Handle paste operation
+async function handlePaste(target) {
+  try {
+    const clipboardText = await navigator.clipboard.readText();
+    if (clipboardText) {
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      target.value = target.value.substring(0, start) + clipboardText + target.value.substring(end);
+      target.selectionStart = target.selectionEnd = start + clipboardText.length;
+      // Trigger input event for height adjustment
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  } catch (error) {
+    console.warn('[AI Chat] Failed to paste:', error);
+  }
+}
+
+// Setup context menu handlers
+function setupContextMenuHandlers() {
+  // Handler for input field
+  if (inputElement) {
+    inputElement.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showContextMenu(e.clientX, e.clientY, inputElement);
+    });
+  }
+
+  // Handler for message contents (delegate to messages container)
+  if (messagesContainer) {
+    messagesContainer.addEventListener('contextmenu', (e) => {
+      const messageContent = e.target.closest('.ai-message-content');
+      if (messageContent) {
+        e.preventDefault();
+        showContextMenu(e.clientX, e.clientY, messageContent);
+      }
+    });
+  }
 }
