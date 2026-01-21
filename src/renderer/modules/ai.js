@@ -27,9 +27,9 @@ const API_CONFIG = {
       { id: 'groq/compound', name: 'Groq Compound', maxTokens: 8192 },
       { id: 'llama-3.3-70b-versatile', name: 'LLaMA 3.3 70B Versatile', maxTokens: 32768 },
       { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'LLaMA 4 Maverick 17B', maxTokens: 8192 },
-      { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', maxTokens: 8192 },
+      { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', maxTokens: 65536 },
       { id: 'groq/compound-mini', name: 'Groq Compound Mini', maxTokens: 8192 },
-      { id: 'llama-3.1-8b-instant', name: 'LLaMA 3.1 8B Instant', maxTokens: 8192 }
+      { id: 'llama-3.1-8b-instant', name: 'LLaMA 3.1 8B Instant', maxTokens: 131072 }
     ],
     defaultModel: 'groq/compound'
   }
@@ -74,22 +74,24 @@ function getModelConfig(provider, modelId) {
   return models.find(m => m.id === modelId) || models[0];
 }
 
-// Единый промпт для форматирования текста
-const FORMATTING_PROMPT = `Роль: ИИ Оформитель в Markdown приложении.
+// Unified prompt for text formatting
+const FORMATTING_PROMPT = `Role: AI Markdown Formatter
 
-Задача: Оформи следующий текст в чистый Markdown формат.
+Task: Format the following text into clean Markdown.
 
-Ключевые требования:
-1. Сохрани ИСХОДНЫЙ ЯЗЫК текста (русский, английский или любой другой) без изменений
-2. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md
-3. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$
-4. Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток
-5. НИЧЕГО не сокращай и не удаляй из исходного текста
-6. НИЧЕГО не добавляй от себя (ни заголовков, ни комментариев, ни дополнительного контента)
-7. Твоя задача ТОЛЬКО оформление существующего текста в Markdown
+CRITICAL REQUIREMENTS:
+1. PRESERVE the original language of the text (Russian, English, or any other) - DO NOT translate or modify language
+2. Consider context and format professionally using the full range of Markdown syntax
+3. For mathematical formulas:
+   - Inline formulas: use $...$ syntax
+   - Block formulas: use $$...$$ syntax  
+   - Consider A4 page width for formula formatting
+4. Output ONLY the formatted Markdown text - no explanations, wrappers, or meta-commentary
+5. DO NOT abbreviate, shorten, or delete anything from the original text
+6. DO NOT add anything (no headers, comments, or additional content)
+7. Your ONLY task is formatting the existing text into Markdown
 
-Текст для оформления:
-
+Text to format:
 `;
 
 // Функция для создания сообщения пользователя
@@ -219,7 +221,7 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
       const stream = await groq.chat.completions.create({
         model: modelConfig.id,
         messages: messages,
-        temperature: provider === 'deepseek' ? 0.3 : provider === 'gemini' ? 0.3 : 0.7,
+        temperature: provider === 'deepseek' ? 0.3 : provider === 'gemini' ? 1.0 : 0.4,
         max_tokens: modelConfig.maxTokens,
         top_p: 1,
         stream: true,

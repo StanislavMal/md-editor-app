@@ -7,6 +7,21 @@ import { updateEditorPaneFullwidth } from './state.js';
 
 console.log('[Module Loaded] ai-chat.js');
 
+// Constants
+const EDITING_PROMPT_SUFFIX = `Execute ONLY the user's editing request precisely.
+
+CRITICAL CONSTRAINTS:
+1. Preserve the original language of the text - NEVER change it unless translation is explicitly requested
+2. When correcting text, follow the grammatical rules and conventions of the text's original language
+3. NEVER add explanations, comments, or meta-commentary
+4. For mathematical formulas:
+   - Inline formulas: use $...$ syntax
+   - Block formulas: use $$...$$ syntax
+   - Consider A4 page width for formula formatting
+5. Return ONLY the edited text with no additional text before or after
+
+Your output must contain nothing but the modified text.`;
+
 // Chat state
 let conversations = [];
 let currentConversationId = null;
@@ -522,12 +537,12 @@ async function handleEditingMode(message) {
   if (hasSelection) {
     // Edit selected text
     textToEdit = editor.state.doc.sliceString(selection.from, selection.to);
-    prompt = `Задание: ${message}\n\nТекст для изменения:\n${textToEdit}\n\nВерни ТОЛЬКО измененный текст, без объяснений и комментариев.`;
+    prompt = `Task: [${message}]\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:[\n${textToEdit}]`;
     modeSelection = selection;
   } else {
     // Edit entire document content
     textToEdit = editor.state.doc.toString();
-    prompt = `Задание: ${message}\n\nТекст для изменения:\n${textToEdit}\n\nВерни ТОЛЬКО измененный текст, без объяснений и комментариев.`;
+    prompt = `Task: ${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
     modeSelection = { from: 0, to: textToEdit.length };
   }
 
