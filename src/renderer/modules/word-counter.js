@@ -1,4 +1,6 @@
 // src/renderer/modules/word-counter.js
+import { EditorView } from '@codemirror/view';
+
 console.log('[Module Loaded] word-counter.js');
 
 /**
@@ -98,16 +100,4 @@ export function initializeWordCounter(editorView) {
 
   // Первоначальное обновление
   updateStats(editorView.state.doc.toString());
-
-  // Слушаем изменения в редакторе
-  const updateListener = EditorView.updateListener.of((update) => {
-    if (update.docChanged) {
-      updateStats(update.state.doc.toString());
-    }
-  });
-
-  // Добавляем listener к редактору
-  editorView.dispatch({
-    effects: [updateListener]
-  });
 }

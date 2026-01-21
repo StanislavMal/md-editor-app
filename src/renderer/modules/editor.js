@@ -18,6 +18,7 @@ import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
 import { lightTheme, darkTheme } from './editor-theme.js';
 import { setUnsavedChanges } from './state.js';
+import { updateStats } from './word-counter.js';
 
 console.log('[Module Loaded] editor.js');
 
@@ -150,6 +151,8 @@ export function initializeEditor(onUpdate) {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
             onUpdate(update.state.doc.toString());
+            // Обновляем счетчик слов
+            updateStats(update.state.doc.toString());
             // Отмечаем, что есть несохраненные изменения
             setUnsavedChanges(true);
         }
