@@ -21,6 +21,7 @@ export function initializeFileIO(cmInstance) {
   // Кнопки в dropdown меню
   document.getElementById('quick-save-dropdown-btn').addEventListener('click', handleQuickSave);
   document.getElementById('save-pdf-dropdown-btn').addEventListener('click', handleSavePdf);
+  document.getElementById('new-doc-btn').addEventListener('click', handleNewDocument);
 }
 
 /**
@@ -178,6 +179,41 @@ async function handleSavePdf() {
   } finally {
     setButtonLoading(savePdfBtn, false, 'Экспорт PDF');
   }
+}
+
+/**
+ * Обрабатывает создание нового документа.
+ */
+function handleNewDocument() {
+  if (!editorView) return;
+
+  // Проверяем, есть ли несохраненные изменения
+  if (hasUnsavedChanges()) {
+    const confirm = window.confirm('Есть несохраненные изменения. Создать новый документ?');
+    if (!confirm) return;
+  }
+
+  // Очищаем редактор
+  editorView.dispatch({
+    changes: { from: 0, to: editorView.state.doc.length, insert: '' },
+    selection: { anchor: 0 }
+  });
+
+  // Сбрасываем состояние файла
+  setCurrentFile(null);
+  setFileLoadedFromDisk(false);
+  setUnsavedChanges(false);
+
+  // Сбрасываем превью
+  resetPreviewState();
+  scheduleUpdate('');
+
+  // Фокус на редактор с задержкой, чтобы изменения применились
+  setTimeout(() => {
+    if (editorView) {
+      editorView.focus();
+    }
+  }, 10);
 }
 
 /**

@@ -36,7 +36,7 @@ export function initializeToolbar(editorView) {
 
   // --- AI форматирование ---
   document.getElementById('btn-ai-format').addEventListener('click', () => handleAIFormat(editorView));
-  document.getElementById('btn-ai-settings').addEventListener('click', () => showAISettings());
+  document.getElementById('ai-settings-dropdown-btn').addEventListener('click', () => showAISettings());
 
   // --- Кнопки управления видом ---
   document.getElementById('toggle-preview').addEventListener('click', () => togglePreview(editorView));

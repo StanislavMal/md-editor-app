@@ -234,3 +234,9 @@ button.loading::after {
 .dropdown-item:active:not(:disabled) {
   background: var(--color-border-muted);
 }
+
+.dropdown-divider {
+  height: 1px;
+  margin: var(--spacing-xs) 0;
+  background-color: var(--color-border-muted);
+}
