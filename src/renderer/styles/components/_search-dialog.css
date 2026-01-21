@@ -213,13 +213,25 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
-  margin-right: 12px;
+  margin-right: 8px;
   font-size: 12px;
 }
 
 .cm-search input[type="checkbox"] {
   margin: 0;
-  margin-right: 4px;
+  margin-right: 2px;
+}
+
+/* Улучшение видимости подсветки поиска в темном режиме */
+[data-theme="dark"] .cm-searchMatch {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="dark"] .cm-searchMatch.cm-searchMatch-selected {
+  background-color: rgba(77, 171, 247, 0.4) !important;
+  border: 1px solid #4dabf7 !important;
+  border-radius: 2px;
 }
 
 /* Локализация панели поиска CodeMirror обрабатывается через JavaScript */
