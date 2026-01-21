@@ -6,6 +6,7 @@ import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.
 import { handleQuickSave } from './file-io.js';
 import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection, getAvailableModels } from './ai.js';
 import { initializeWordCounter } from './word-counter.js';
+import { openSearchDialog } from './search-replace.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -29,6 +30,9 @@ export function initializeToolbar(editorView) {
   // --- Кнопки undo/redo ---
   document.getElementById('btn-undo').addEventListener('click', () => performUndo(editorView));
   document.getElementById('btn-redo').addEventListener('click', () => performRedo(editorView));
+
+  // --- Поиск и замена ---
+  document.getElementById('btn-search-replace').addEventListener('click', () => openSearchDialog());
 
   // --- AI форматирование ---
   document.getElementById('btn-ai-format').addEventListener('click', () => handleAIFormat(editorView));

@@ -1,0 +1,209 @@
+/* src/renderer/styles/components/_search-dialog.css */
+
+.search-dialog {
+  background: var(--bg-color, white);
+  color: var(--text-color, black);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 450px;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+.search-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #ddd);
+  background: var(--bg-color, white);
+}
+
+.search-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color, black);
+}
+
+.search-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-color, black);
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.search-close-btn:hover {
+  background: var(--hover-bg, #f0f0f0);
+}
+
+.search-dialog-body {
+  padding: 20px;
+}
+
+.search-field {
+  margin-bottom: 16px;
+}
+
+.search-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-color, black);
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  background: var(--bg-color, white);
+  color: var(--text-color, black);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.search-options {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.search-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+  user-select: none;
+}
+
+.search-options input[type="checkbox"] {
+  margin: 0;
+}
+
+.search-dialog-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color, #ddd);
+  background: var(--bg-color, white);
+}
+
+.search-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color, #ddd);
+  background: var(--bg-color, white);
+  color: var(--text-color, black);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.search-btn:hover {
+  background: var(--hover-bg, #f0f0f0);
+  border-color: var(--accent-color, #007bff);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.search-btn-primary {
+  background: var(--accent-color, #007bff);
+  color: white;
+  border-color: var(--accent-color, #007bff);
+}
+
+.search-btn-primary:hover {
+  background: var(--accent-hover, #0056b3);
+  border-color: var(--accent-hover, #0056b3);
+}
+
+/* Темная тема */
+[data-theme="dark"] .search-dialog {
+  background: var(--bg-color, #2d2d2d);
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-dialog-header {
+  border-bottom-color: var(--border-color, #555);
+  background: var(--bg-color, #2d2d2d);
+}
+
+[data-theme="dark"] .search-dialog-header h3 {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-close-btn {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-close-btn:hover {
+  background: var(--hover-bg, #444);
+}
+
+[data-theme="dark"] .search-field label {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-input {
+  border-color: var(--border-color, #555);
+  background: var(--bg-color, #333);
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-input:focus {
+  border-color: var(--accent-color, #4dabf7);
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.25);
+}
+
+[data-theme="dark"] .search-options label {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-dialog-footer {
+  border-top-color: var(--border-color, #555);
+  background: var(--bg-color, #2d2d2d);
+}
+
+[data-theme="dark"] .search-btn {
+  border-color: var(--border-color, #555);
+  background: var(--bg-color, #333);
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .search-btn:hover {
+  background: var(--hover-bg, #444);
+  border-color: var(--accent-color, #4dabf7);
+}
+
+[data-theme="dark"] .search-btn-primary {
+  background: var(--accent-color, #4dabf7);
+  color: white;
+  border-color: var(--accent-color, #4dabf7);
+}
+
+[data-theme="dark"] .search-btn-primary:hover {
+  background: var(--accent-hover, #339af0);
+  border-color: var(--accent-hover, #339af0);
+}

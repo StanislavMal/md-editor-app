@@ -3,6 +3,7 @@
 import { EditorState, StateEffect, StateField, EditorSelection, Compartment } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo } from '@codemirror/commands';
+import { search } from '@codemirror/search';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
@@ -19,6 +20,7 @@ import { xml } from '@codemirror/lang-xml';
 import { lightTheme, darkTheme } from './editor-theme.js';
 import { setUnsavedChanges } from './state.js';
 import { updateStats } from './word-counter.js';
+import { openSearchDialog } from './search-replace.js';
 
 console.log('[Module Loaded] editor.js');
 
@@ -128,6 +130,7 @@ export function initializeEditor(onUpdate) {
     doc: `# MD to PDF - Markdown-редактор\n\n## Возможности:\n\n- **Редактирование Markdown**: Пиши текст с форматированием, используя синтаксис Markdown\n- **Живой превью**: Видишь результат в реальном времени\n- **Экспорт в PDF**: Сохраняй документы в формате PDF\n- **Форматирование**: Используй горячие клавиши для быстрого форматирования\n- **AI-помощник**: Получай помощь от ИИ при редактировании, включая автоматическое форматирование Markdown нажатием одной кнопки\n- **Темы**: Светлая и тёмная темы интерфейса\n\n## Горячие клавиши:\n\n- **Ctrl+S** - Быстрое сохранение\n- **Ctrl+B** - Жирный текст\n- **Ctrl+I** - Курсив\n- **Ctrl+P** - Переключить превью\n- **Ctrl+Shift+A** - AI Чат\n\nНачни писать свой документ!`,
     extensions: [
       lineNumbers(), history(), drawSelection(), EditorView.lineWrapping,
+      search(),
       markdown({
         base: markdownLanguage,
         codeLanguages: lazyLoadLanguage,
@@ -146,6 +149,8 @@ export function initializeEditor(onUpdate) {
         { key: 'Ctrl-g', run: (view) => applyMarkdown('image', view) },
         { key: 'Ctrl-t', run: (view) => applyMarkdown('table', view) },
         { key: 'Ctrl-Shift-l', run: (view) => applyMarkdown('tasklist', view) },
+        { key: 'Ctrl-f', run: () => { openSearchDialog(); return true; } },
+        { key: 'Ctrl-Shift-h', run: () => { openSearchDialog(); return true; } },
       ]),
       placeholderField,
       EditorView.updateListener.of((update) => {
