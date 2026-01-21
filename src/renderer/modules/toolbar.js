@@ -73,25 +73,36 @@ export function initializeToolbar(editorView) {
 
   // --- Глобальные горячие клавиши ---
   document.addEventListener('keydown', (e) => {
+    // Обработка клавиш в начале, до других обработчиков
     if (e.ctrlKey && (e.key.toLowerCase() === 'p' || e.code === 'KeyP')) {
       e.preventDefault();
+      e.stopPropagation();
       togglePreview(editorView);
+      return;
     }
     if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'd' || e.code === 'KeyD')) {
       e.preventDefault();
+      e.stopPropagation();
       toggleTheme();
+      return;
     }
     if (e.ctrlKey && (e.key.toLowerCase() === 's' || e.code === 'KeyS')) {
       e.preventDefault();
+      e.stopPropagation();
       handleQuickSave();
+      return;
     }
     if (e.ctrlKey && (e.key.toLowerCase() === 'f' || e.code === 'KeyF')) {
       e.preventDefault();
+      e.stopPropagation();
       openSearchDialog();
+      return;
     }
     if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'h' || e.code === 'KeyH')) {
       e.preventDefault();
+      e.stopPropagation();
       openSearchDialog();
+      return;
     }
   });
 
