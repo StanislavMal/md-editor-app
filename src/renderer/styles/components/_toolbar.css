@@ -2,10 +2,11 @@
 
 .toolbar {
   position: sticky;
-  top: 0;
+  top: var(--title-bar-height);
   left: 0;
   width: 100%;
   height: var(--toolbar-height);
+  margin-top: var(--title-bar-height);
   background: var(--color-toolbar-gradient);
   border-bottom: 1px solid var(--color-border-muted);
   box-shadow: var(--shadow-toolbar, 0 2px 8px rgba(0, 0, 0, 0.08));
