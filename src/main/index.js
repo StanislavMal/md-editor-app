@@ -49,7 +49,6 @@ function createWindow() {
     width: 1200,
     height: 800,
     frame: false,
-    fullscreen: true,
     icon: path.join(__dirname, '../../assets/icon.png'),
     show: false,
     webPreferences: {
@@ -59,6 +58,15 @@ function createWindow() {
   });
 
   mainWindow.setMenu(null);
+
+  // Обработчики изменения состояния полноэкранного режима
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.send('fullscreen-changed', true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send('fullscreen-changed', false);
+  });
 
   // Обработчик закрытия окна
   mainWindow.on('close', async (event) => {

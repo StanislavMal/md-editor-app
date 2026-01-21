@@ -140,6 +140,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-btn')?.addEventListener('click', () => {
       window.electronAPI.closeWindow();
     });
+
+    // Функция для обновления состояния полноэкранного режима
+    const updateFullscreenState = (isFullscreen) => {
+      console.log('[Renderer] Fullscreen state:', isFullscreen);
+      if (isFullscreen) {
+        document.body.classList.add('fullscreen');
+      } else {
+        document.body.classList.remove('fullscreen');
+      }
+    };
+
+    // Обработчик изменения полноэкранного режима
+    window.electronAPI.onFullscreenChanged((event, isFullscreen) => {
+      updateFullscreenState(isFullscreen);
+    });
     console.timeEnd('Title Bar Init');
 
     console.log('[Renderer] 7. Initial rendering...');
