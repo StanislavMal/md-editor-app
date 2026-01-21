@@ -130,7 +130,10 @@ export function initializeEditor(onUpdate) {
     doc: `# MD to PDF - Markdown-редактор\n\n## Возможности:\n\n- **Редактирование Markdown**: Пиши текст с форматированием, используя синтаксис Markdown\n- **Живой превью**: Видишь результат в реальном времени\n- **Экспорт в PDF**: Сохраняй документы в формате PDF\n- **Форматирование**: Используй горячие клавиши для быстрого форматирования\n- **AI-помощник**: Получай помощь от ИИ при редактировании, включая автоматическое форматирование Markdown нажатием одной кнопки\n- **Темы**: Светлая и тёмная темы интерфейса\n\n## Горячие клавиши:\n\n- **Ctrl+S** - Быстрое сохранение\n- **Ctrl+B** - Жирный текст\n- **Ctrl+I** - Курсив\n- **Ctrl+P** - Переключить превью\n- **Ctrl+Shift+A** - AI Чат\n\nНачни писать свой документ!`,
     extensions: [
       lineNumbers(), history(), drawSelection(), EditorView.lineWrapping,
-      search(),
+      search({
+        placeholder: "Найти...",
+        replacePlaceholder: "Заменить на..."
+      }),
       markdown({
         base: markdownLanguage,
         codeLanguages: lazyLoadLanguage,

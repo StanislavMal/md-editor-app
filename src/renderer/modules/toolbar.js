@@ -85,6 +85,14 @@ export function initializeToolbar(editorView) {
       e.preventDefault();
       handleQuickSave();
     }
+    if (e.ctrlKey && (e.key.toLowerCase() === 'f' || e.code === 'KeyF')) {
+      e.preventDefault();
+      openSearchDialog();
+    }
+    if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'h' || e.code === 'KeyH')) {
+      e.preventDefault();
+      openSearchDialog();
+    }
   });
 
 }

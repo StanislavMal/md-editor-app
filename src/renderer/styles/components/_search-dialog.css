@@ -207,3 +207,5 @@
   background: var(--accent-hover, #339af0);
   border-color: var(--accent-hover, #339af0);
 }
+
+/* Локализация панели поиска CodeMirror обрабатывается через JavaScript */
