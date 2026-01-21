@@ -2,7 +2,7 @@
 
 import { EditorState, StateEffect, StateField, EditorSelection, Compartment } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, drawSelection } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
@@ -271,33 +271,78 @@ export function applyMarkdown(type, view = editorView) {
         return true;
     }
 
+    // --- НОВАЯ ЛОГИКА С TOGGLE ДЛЯ bold, italic, heading ---
+    if (['bold', 'italic', 'heading'].includes(type)) {
+        const changes = [];
+        const selectionRanges = [];
+
+        for (const range of state.selection.ranges) {
+            const text = state.doc.sliceString(range.from, range.to);
+
+            if (type === 'heading') {
+                const line = state.doc.lineAt(range.from);
+                const lineText = line.text;
+                let newHeading;
+                if (lineText.startsWith('#')) {
+                    // Убираем все # и пробелы в начале
+                    newHeading = lineText.replace(/^#+\s*/, '');
+                } else {
+                    // Добавляем # и пробел
+                    newHeading = `# ${lineText}`;
+                }
+                changes.push({ from: line.from, to: line.to, insert: newHeading });
+                const newCursorPos = line.from + newHeading.length;
+                selectionRanges.push(EditorSelection.range(newCursorPos, newCursorPos));
+                break;
+            }
+
+            // Для bold и italic: проверяем, есть ли уже форматирование
+            const markers = {
+                'bold': { marker: '**', regex: /^\*\*(.*)\*\*$/ },
+                'italic': { marker: '*', regex: /^\*(.*)\*$/ }
+            };
+            const m = markers[type];
+            if (!m) continue;
+
+            let newText;
+            let selectionStart, selectionEnd;
+
+            if (m.regex.test(text)) {
+                // Снимаем форматирование
+                newText = text.replace(m.regex, '$1');
+                selectionStart = range.from;
+                selectionEnd = range.from + newText.length;
+            } else {
+                // Добавляем форматирование
+                const content = text || (type === 'bold' ? 'жирный текст' : 'курсивный текст');
+                newText = m.marker + content + m.marker;
+                selectionStart = range.from + m.marker.length;
+                selectionEnd = selectionStart + content.length;
+            }
+
+            changes.push({ from: range.from, to: range.to, insert: newText });
+            selectionRanges.push(EditorSelection.range(selectionStart, selectionEnd));
+        }
+
+        if (changes.length > 0) {
+            view.dispatch({
+                changes: changes,
+                selection: EditorSelection.create(selectionRanges),
+                scrollIntoView: true,
+                userEvent: 'input'
+            });
+        }
+        return true;
+    }
+
     // --- СТАРАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ ТИПОВ ---
     const changes = [];
     const selectionRanges = [];
-    
+
     for (const range of state.selection.ranges) {
         const text = state.doc.sliceString(range.from, range.to);
 
-        if (type === 'heading') {
-            const line = state.doc.lineAt(range.from);
-            const lineText = line.text;
-            let newHeading;
-            if (lineText.startsWith('#')) {
-                // Убираем все # и пробелы в начале
-                newHeading = lineText.replace(/^#+\s*/, '');
-            } else {
-                // Добавляем # и пробел
-                newHeading = `# ${lineText}`;
-            }
-            changes.push({ from: line.from, to: line.to, insert: newHeading });
-            const newCursorPos = line.from + newHeading.length;
-            selectionRanges.push(EditorSelection.range(newCursorPos, newCursorPos));
-            break;
-        }
-
         const templates = {
-            'bold': { prefix: '**', suffix: '**', default: 'жирный текст' },
-            'italic': { prefix: '*', suffix: '*', default: 'курсивный текст' },
             'link': { prefix: '[', suffix: '](https://)', default: 'текст ссылки' },
             'image': { prefix: '![описание изображения](https://){width="100%"}', suffix: '', default: '' },
             'table': { prefix: '\n| Заголовок 1 | Заголовок 2 |\n|---|---|\n| Ячейка 1 | Ячейка 2 |\n', suffix: '', default: '' },
@@ -311,7 +356,7 @@ export function applyMarkdown(type, view = editorView) {
         const content = text || t.default;
         const newText = t.prefix + content + t.suffix;
         changes.push({ from: range.from, to: range.to, insert: newText });
-        
+
         const selectionStart = range.from + t.prefix.length;
         const selectionEnd = selectionStart + content.length;
         selectionRanges.push(EditorSelection.range(selectionStart, selectionEnd));
@@ -347,6 +392,16 @@ export function insertLineBreak(view = editorView) {
 
 export function getEditorView() {
   return editorView;
+}
+
+export function performUndo(view = editorView) {
+  if (!view) return false;
+  return undo(view);
+}
+
+export function performRedo(view = editorView) {
+  if (!view) return false;
+  return redo(view);
 }
 
 async function handleImageUpload(base64Data, view) {

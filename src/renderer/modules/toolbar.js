@@ -1,7 +1,7 @@
 // src/renderer/modules/toolbar.js
 console.log('[Module Loaded] toolbar.js');
 
-import { applyMarkdown, insertLineBreak, getEditorView } from './editor.js';
+import { applyMarkdown, insertLineBreak, getEditorView, performUndo, performRedo } from './editor.js';
 import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.js';
 import { handleQuickSave } from './file-io.js';
 import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection, getAvailableModels } from './ai.js';
@@ -24,6 +24,10 @@ export function initializeToolbar(editorView) {
   document.getElementById('btn-table').addEventListener('click', () => applyMarkdown('table', editorView));
   document.getElementById('btn-tasklist').addEventListener('click', () => applyMarkdown('tasklist', editorView));
   document.getElementById('btn-linebreak').addEventListener('click', () => insertLineBreak(editorView));
+
+  // --- Кнопки undo/redo ---
+  document.getElementById('btn-undo').addEventListener('click', () => performUndo(editorView));
+  document.getElementById('btn-redo').addEventListener('click', () => performRedo(editorView));
 
   // --- AI форматирование ---
   document.getElementById('btn-ai-format').addEventListener('click', () => handleAIFormat(editorView));
