@@ -152,8 +152,7 @@ export function initializeEditor(onUpdate) {
         { key: 'Ctrl-g', run: (view) => applyMarkdown('image', view) },
         { key: 'Ctrl-t', run: (view) => applyMarkdown('table', view) },
         { key: 'Ctrl-Shift-l', run: (view) => applyMarkdown('tasklist', view) },
-        { key: 'Ctrl-f', run: () => { openSearchDialog(); return true; } },
-        { key: 'Ctrl-Shift-h', run: () => { openSearchDialog(); return true; } },
+
       ]),
       placeholderField,
       EditorView.updateListener.of((update) => {

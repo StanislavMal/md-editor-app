@@ -10,7 +10,6 @@ export function openSearchDialog() {
   const editorView = getEditorView();
   if (!editorView) return;
 
-  // Проверяем, открыта ли уже панель поиска
   const searchPanel = editorView.dom.querySelector('.cm-search');
   if (searchPanel) {
     // Если открыта, закрываем
