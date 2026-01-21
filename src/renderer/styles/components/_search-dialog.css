@@ -208,4 +208,18 @@
   border-color: var(--accent-hover, #339af0);
 }
 
+/* Стили для панели поиска CodeMirror */
+.cm-search label {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 12px;
+  font-size: 12px;
+}
+
+.cm-search input[type="checkbox"] {
+  margin: 0;
+  margin-right: 4px;
+}
+
 /* Локализация панели поиска CodeMirror обрабатывается через JavaScript */
