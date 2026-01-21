@@ -74,6 +74,19 @@ function getModelConfig(provider, modelId) {
   return models.find(m => m.id === modelId) || models[0];
 }
 
+// Единый промпт для форматирования текста
+const FORMATTING_PROMPT = `Роль: ИИ Оформитель в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление. Текст для оформления:\n\n`;
+
+// Функция для создания сообщения пользователя
+function createUserMessage(content) {
+  return { role: 'user', content };
+}
+
+// Функция для создания промпта форматирования
+function createFormattingPrompt(text) {
+  return createUserMessage(FORMATTING_PROMPT + text);
+}
+
 // Очистка текста от обертки ```markdown ```
 function cleanMarkdownWrapper(text) {
   const trimmed = text.trim();
@@ -118,10 +131,7 @@ function splitTextIntoChunks(text, maxLength = 4000) {
 async function callDeepSeekAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-    content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$ или \\(...\\), блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление:\n\n${text}`
-    }],
+    messages: [createFormattingPrompt(text)],
     max_tokens: modelConfig.maxTokens,
     temperature: 0.3
   }, {
@@ -138,10 +148,7 @@ async function callDeepSeekAPI(text, apiKey, modelConfig) {
 async function callGeminiAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-      content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
-    }],
+    messages: [createFormattingPrompt(text)],
     max_tokens: modelConfig.maxTokens,
     temperature: 0.1
   }, {
@@ -163,10 +170,7 @@ async function callGroqAPI(text, apiKey, modelConfig) {
 
   const completion = await groq.chat.completions.create({
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-      content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
-    }],
+    messages: [createFormattingPrompt(text)],
     temperature: 1,
     max_tokens: modelConfig.maxTokens,
     top_p: 1,
@@ -177,11 +181,42 @@ async function callGroqAPI(text, apiKey, modelConfig) {
   return cleanMarkdownWrapper(completion.choices[0].message.content);
 }
 
-// Streaming DeepSeek API
-async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+// Универсальная функция для streaming API
+async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onError, modelConfig) {
   try {
-    // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
-    const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
+    let response;
+    const isGroq = provider === 'groq';
+
+    if (isGroq) {
+      // Groq использует свою библиотеку
+      const groq = new Groq({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const stream = await groq.chat.completions.create({
+        model: modelConfig.id,
+        messages: messages,
+        temperature: provider === 'deepseek' ? 0.3 : provider === 'gemini' ? 0.3 : 0.7,
+        max_tokens: modelConfig.maxTokens,
+        top_p: 1,
+        stream: true,
+        stop: null
+      });
+
+      let accumulatedText = '';
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        accumulatedText += content;
+        onChunk(accumulatedText);
+      }
+      onComplete(provider === 'deepseek' || provider === 'gemini' ? cleanMarkdownWrapper(accumulatedText) : accumulatedText);
+      return;
+    }
+
+    // Для DeepSeek и Gemini используем fetch
+    const config = API_CONFIG[provider];
+    response = await fetch(`${config.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -190,12 +225,9 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, mod
       },
       body: JSON.stringify({
         model: modelConfig.id,
-        messages: [{
-          role: 'user',
-        content: `Роль: ИИ Редактор в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$[образец:"$$\Longleftrightarrow\; 4n^{2}+11n+6=4n^{2}+11n+6.$$"]. Ничего не добавляй и не удаляй в исходном тексте, твоя задача сделать только оформление:\n\n${text}`
-        }],
+        messages: messages,
         max_tokens: modelConfig.maxTokens,
-        temperature: 0.3,
+        temperature: provider === 'deepseek' ? 0.3 : 0.7,
         stream: true
       })
     });
@@ -265,135 +297,26 @@ async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, mod
       }
     }
   } catch (error) {
-    onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
+    onError(new Error(`Ошибка стрима ${provider}: ${error.message}`));
   }
+}
+
+// Streaming DeepSeek API
+async function streamDeepSeekAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
+  const messages = [createFormattingPrompt(text)];
+  await streamAPI('deepseek', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Streaming Gemini API
 async function streamGeminiAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
-  try {
-    // Используем fetch для streaming, так как axios не всегда корректно работает с потоками
-    const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept-Charset': 'utf-8'
-      },
-      body: JSON.stringify({
-        model: modelConfig.id,
-        messages: [{
-          role: 'user',
-          content: `Роль: ИИ Редактор в Markdown приложении. Задача:Преобразуй следующий текст в чистый Markdown формат. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$ или \\(...\\), блочные в $$...$$ или \\[...\\]. НЕ оборачивай результат в тройные обратные кавычки или блоки кода. Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток.:\n\n${text}`
-        }],
-        max_tokens: modelConfig.maxTokens,
-        temperature: 0.3,
-        stream: true
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let accumulatedText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        // Финализируем декодирование для обработки оставшихся байтов
-        const finalChunk = decoder.decode();
-        if (finalChunk) {
-          const lines = finalChunk.split('\n').filter(line => line.trim());
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6);
-              if (jsonStr === '[DONE]') {
-                onComplete(cleanMarkdownWrapper(accumulatedText));
-                return;
-              }
-              try {
-                const data = JSON.parse(jsonStr);
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  accumulatedText += content;
-                }
-              } catch (e) {
-                // Игнорируем невалидный JSON
-              }
-            }
-          }
-        }
-        onComplete(cleanMarkdownWrapper(accumulatedText));
-        break;
-      }
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim());
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6);
-
-          if (jsonStr === '[DONE]') {
-            onComplete(cleanMarkdownWrapper(accumulatedText));
-            return;
-          }
-
-          try {
-            const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content;
-            if (content) {
-              accumulatedText += content;
-              onChunk(accumulatedText);
-            }
-          } catch (e) {
-            // Игнорируем невалидный JSON
-          }
-        }
-      }
-    }
-  } catch (error) {
-    onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
-  }
+  const messages = [createFormattingPrompt(text)];
+  await streamAPI('gemini', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Streaming Groq API
 async function streamGroqAPI(text, apiKey, onChunk, onComplete, onError, modelConfig) {
-  try {
-    const groq = new Groq({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const stream = await groq.chat.completions.create({
-      model: modelConfig.id,
-      messages: [{
-        role: 'user',
-        content: `Роль: ИИ Оформитель в Markdown приложении. Задача:Оформи следующий текст в чистый Markdown формат. Учитывай контекст, стремись сделать профессионально и красиво, используя весь инструментарий md. Для математических формул используй LaTeX синтаксис: инлайновые формулы в $...$, блочные в $$...$$.Выведи ТОЛЬКО отформатированный Markdown текст, без пояснений и без оберток. Ничего не сокращай и не удаляй из исходного текста, а также ничего не добавляй, твоя задача только оформление. Текст для оформления:\n\n${text}`
-      }],
-      temperature: 1,
-      max_tokens: modelConfig.maxTokens,
-      top_p: 1,
-      stream: true,
-      stop: null
-    });
-
-    let accumulatedText = '';
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      accumulatedText += content;
-      onChunk(accumulatedText);
-    }
-
-    onComplete(cleanMarkdownWrapper(accumulatedText));
-  } catch (error) {
-    onError(new Error(`Ошибка стрима Groq: ${error.message}`));
-  }
+  const messages = [createFormattingPrompt(text)];
+  await streamAPI('groq', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Основная функция форматирования текста через AI (синхронная)
@@ -520,10 +443,7 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
 async function callDeepSeekChatAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-      content: text
-    }],
+    messages: [createUserMessage(text)],
     max_tokens: modelConfig.maxTokens,
     temperature: 0.7
   }, {
@@ -540,10 +460,7 @@ async function callDeepSeekChatAPI(text, apiKey, modelConfig) {
 async function callGeminiChatAPI(text, apiKey, modelConfig) {
   const response = await axios.post(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-      content: text
-    }],
+    messages: [createUserMessage(text)],
     max_tokens: modelConfig.maxTokens,
     temperature: 0.7
   }, {
@@ -565,10 +482,7 @@ async function callGroqChatAPI(text, apiKey, modelConfig) {
 
   const completion = await groq.chat.completions.create({
     model: modelConfig.id,
-    messages: [{
-      role: 'user',
-      content: text
-    }],
+    messages: [createUserMessage(text)],
     temperature: 0.7,
     max_tokens: modelConfig.maxTokens,
     top_p: 1,
@@ -581,210 +495,17 @@ async function callGroqChatAPI(text, apiKey, modelConfig) {
 
 // Streaming DeepSeek для общего чата
 async function streamDeepSeekChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
-  try {
-    const response = await fetch(`${API_CONFIG.deepseek.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept-Charset': 'utf-8'
-      },
-      body: JSON.stringify({
-        model: modelConfig.id,
-        messages: messages,
-        max_tokens: modelConfig.maxTokens,
-        temperature: 0.7,
-        stream: true
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let accumulatedText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        // Финализируем декодирование для обработки оставшихся байтов
-        const finalChunk = decoder.decode();
-        if (finalChunk) {
-          const lines = finalChunk.split('\n').filter(line => line.trim());
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6);
-              if (jsonStr === '[DONE]') {
-                onComplete(accumulatedText);
-                return;
-              }
-              try {
-                const data = JSON.parse(jsonStr);
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  accumulatedText += content;
-                }
-              } catch (e) {
-                // Игнорируем невалидный JSON
-              }
-            }
-          }
-        }
-        onComplete(accumulatedText);
-        break;
-      }
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim());
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6);
-
-          if (jsonStr === '[DONE]') {
-            onComplete(accumulatedText);
-            return;
-          }
-
-          try {
-            const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content;
-            if (content) {
-              accumulatedText += content;
-              onChunk(accumulatedText);
-            }
-          } catch (e) {
-            // Игнорируем невалидный JSON
-          }
-        }
-      }
-    }
-  } catch (error) {
-    onError(new Error(`Ошибка стрима DeepSeek: ${error.message}`));
-  }
+  await streamAPI('deepseek', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Streaming Gemini для общего чата
 async function streamGeminiChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
-  try {
-    const response = await fetch(`${API_CONFIG.gemini.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept-Charset': 'utf-8'
-      },
-      body: JSON.stringify({
-        model: modelConfig.id,
-        messages: messages,
-        max_tokens: modelConfig.maxTokens,
-        temperature: 0.7,
-        stream: true
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let accumulatedText = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        // Финализируем декодирование для обработки оставшихся байтов
-        const finalChunk = decoder.decode();
-        if (finalChunk) {
-          const lines = finalChunk.split('\n').filter(line => line.trim());
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6);
-              if (jsonStr === '[DONE]') {
-                onComplete(accumulatedText);
-                return;
-              }
-              try {
-                const data = JSON.parse(jsonStr);
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  accumulatedText += content;
-                }
-              } catch (e) {
-                // Игнорируем невалидный JSON
-              }
-            }
-          }
-        }
-        onComplete(accumulatedText);
-        break;
-      }
-
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim());
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6);
-
-          if (jsonStr === '[DONE]') {
-            onComplete(accumulatedText);
-            return;
-          }
-
-          try {
-            const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content;
-            if (content) {
-              accumulatedText += content;
-              onChunk(accumulatedText);
-            }
-          } catch (e) {
-            // Игнорируем невалидный JSON
-          }
-        }
-      }
-    }
-  } catch (error) {
-    onError(new Error(`Ошибка стрима Gemini: ${error.message}`));
-  }
+  await streamAPI('gemini', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Streaming Groq для общего чата
 async function streamGroqChatAPI(messages, apiKey, onChunk, onComplete, onError, modelConfig) {
-  try {
-    const groq = new Groq({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const stream = await groq.chat.completions.create({
-      model: modelConfig.id,
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: modelConfig.maxTokens,
-      top_p: 1,
-      stream: true,
-      stop: null
-    });
-
-    let accumulatedText = '';
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      accumulatedText += content;
-      onChunk(accumulatedText);
-    }
-
-    onComplete(accumulatedText);
-  } catch (error) {
-    onError(new Error(`Ошибка стрима Groq: ${error.message}`));
-  }
+  await streamAPI('groq', messages, apiKey, onChunk, onComplete, onError, modelConfig);
 }
 
 // Основная функция для общего чата
