@@ -112,6 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeToolbar(editorView);
     console.timeEnd('Toolbar Init');
 
+    console.log('[Renderer] 3.5. Initializing word counter...');
+    console.time('Word Counter Init');
+    import('./modules/word-counter.js').then(({ initializeWordCounter }) => {
+      initializeWordCounter(editorView);
+      console.timeEnd('Word Counter Init');
+    });
+
     console.log('[Renderer] 4. Initializing file IO...');
     console.time('FileIO Init');
     initializeFileIO(editorView);

@@ -5,6 +5,7 @@ import { applyMarkdown, insertLineBreak, getEditorView, performUndo, performRedo
 import { toggleTheme, togglePreview, zoomIn, zoomOut, resetZoom } from './state.js';
 import { handleQuickSave } from './file-io.js';
 import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection, getAvailableModels } from './ai.js';
+import { initializeWordCounter } from './word-counter.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -35,9 +36,11 @@ export function initializeToolbar(editorView) {
 
   // --- Кнопки управления видом ---
   document.getElementById('toggle-preview').addEventListener('click', () => togglePreview(editorView));
-  document.getElementById('zoom-in').addEventListener('click', zoomIn);
-  document.getElementById('zoom-out').addEventListener('click', zoomOut);
-  document.getElementById('zoom-reset').addEventListener('click', resetZoom);
+
+  // --- Кнопки zoom в статус-баре ---
+  document.getElementById('zoom-in')?.addEventListener('click', zoomIn);
+  document.getElementById('zoom-out')?.addEventListener('click', zoomOut);
+  document.getElementById('zoom-reset')?.addEventListener('click', resetZoom);
 
   // --- Переключатель темы ---
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);

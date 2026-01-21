@@ -40,15 +40,7 @@
   transition: background-color var(--transition-base);
 }
 
-.zoom-value {
-  min-width: 52px;
-  text-align: center;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--color-fg-default);
-  padding: var(--spacing-xs) var(--spacing-sm);
-}
+
 
 /* Адаптивность тулбара */
 @media (max-width: 1400px) {

@@ -1,0 +1,152 @@
+/* src/renderer/styles/components/_status-bar.css */
+
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--status-bar-height);
+  background: var(--color-toolbar-gradient);
+  border-top: 1px solid var(--color-border-muted);
+  box-shadow: var(--shadow-toolbar, 0 -2px 8px rgba(0, 0, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  z-index: 1000;
+  transition: all var(--transition-base);
+}
+
+.status-bar-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.status-bar-left {
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.status-bar-right {
+  flex: 0;
+  justify-content: flex-end;
+}
+
+.status-item {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.status-item span {
+  font-weight: 600;
+  color: var(--color-fg-default);
+}
+
+.status-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--color-border-muted);
+  margin: 0 var(--spacing-xs);
+  transition: background-color var(--transition-base);
+}
+
+/* Кнопки в статус-баре */
+.btn-icon-sm {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: all var(--transition-fast);
+  padding: 2px;
+}
+
+.btn-icon-sm:hover {
+  background: var(--color-canvas-inset);
+  color: var(--color-fg-default);
+}
+
+.btn-icon-sm:active {
+  background: var(--color-border-muted);
+  transform: scale(0.95);
+}
+
+.btn-icon-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Адаптивность статус-бара */
+@media (max-width: 1024px) {
+  .status-bar {
+    padding: 0 var(--spacing-md);
+  }
+
+  .status-item {
+    font-size: 11px;
+  }
+
+  .status-divider {
+    height: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-bar {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .status-bar-section {
+    gap: var(--spacing-xs);
+  }
+
+  .status-item {
+    font-size: 10px;
+  }
+
+  /* Скрываем некоторые элементы на малых экранах */
+  .status-bar-left .status-item:nth-child(3),
+  .status-bar-left .status-divider:nth-child(6) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-bar {
+    height: 28px;
+    padding: 0 var(--spacing-xs);
+  }
+
+  .status-item {
+    font-size: 9px;
+  }
+
+  .btn-icon-sm {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-icon-sm svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Скрываем дополнительные элементы */
+  .status-bar-left .status-item:nth-child(1),
+  .status-bar-left .status-divider:nth-child(2),
+  .status-bar-left .status-item:nth-child(2),
+  .status-bar-left .status-divider:nth-child(4) {
+    display: none;
+  }
+}

@@ -51,6 +51,7 @@
   /* Размеры */
   --title-bar-height: 30px;
   --toolbar-height: 56px;
+  --status-bar-height: 32px;
   --border-radius: 6px;
   --border-radius-lg: 8px;
   --spacing-xs: 4px;

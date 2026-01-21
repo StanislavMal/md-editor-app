@@ -109,7 +109,13 @@ export function setZoom(newZoom) {
   const scale = state.zoomLevel / 100;
   state.ui.editorPane.style.setProperty('--zoom-scale', scale);
   state.ui.previewPane.style.setProperty('--zoom-scale', scale);
-  state.ui.zoomLevelIndicator.textContent = `${state.zoomLevel}%`;
+
+  // Обновляем индикатор в статус-баре
+  const zoomIndicator = document.getElementById('zoom-level');
+  if (zoomIndicator) {
+    zoomIndicator.textContent = `${state.zoomLevel}%`;
+  }
+
   // Сохраняем в localStorage
   localStorage.setItem('zoomLevel', state.zoomLevel);
 }

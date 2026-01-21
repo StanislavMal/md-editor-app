@@ -243,19 +243,6 @@
 
         <div class="toolbar-divider"></div>
 
-        <button id="zoom-out" class="btn-icon" title="Уменьшить масштаб" aria-label="Уменьшить">
-          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 8h10v1H2V8z"/></svg>
-        </button>
-        <span id="zoom-level" class="zoom-value">100%</span>
-        <button id="zoom-in" class="btn-icon" title="Увеличить масштаб" aria-label="Увеличить">
-          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2v6h6v1H8v6H7V9H1V8h6V2h1z"/></svg>
-        </button>
-        <button id="zoom-reset" class="btn-icon" title="Сбросить масштаб" aria-label="Сбросить масштаб">
-          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/></svg>
-        </button>
-
-        <div class="toolbar-divider"></div>
-
         <!-- Переключатель темы -->
         <button id="theme-toggle" class="btn-icon" title="Переключить тему (Ctrl+Shift+D)" aria-label="Переключить тему">
           <svg class="icon icon-lg theme-icon-light" viewBox="0 0 16 16" fill="currentColor">
@@ -360,6 +347,40 @@
     </div>
     <div class="preview-pane">
       <div id="pdf-simulation-container"></div>
+    </div>
+  </div>
+
+  <!-- НИЖНЯЯ ПАНЕЛЬ СТАТУС-БАР -->
+  <div class="status-bar">
+    <div class="status-bar-section status-bar-left">
+      <span class="status-item">
+        <span id="word-count">0</span> слов
+      </span>
+      <div class="status-divider"></div>
+      <span class="status-item">
+        <span id="char-count">0 (0)</span> символов
+      </span>
+      <div class="status-divider"></div>
+      <span class="status-item">
+        <span id="line-count">1</span> строк
+      </span>
+      <div class="status-divider"></div>
+      <span class="status-item">
+        Время чтения: <span id="reading-time">0 сек</span>
+      </span>
+    </div>
+
+    <div class="status-bar-section status-bar-right">
+      <button id="zoom-out" class="btn-icon-sm" title="Уменьшить масштаб" aria-label="Уменьшить">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 8h10v1H2V8z"/></svg>
+      </button>
+      <span id="zoom-level" class="zoom-value">100%</span>
+      <button id="zoom-in" class="btn-icon-sm" title="Увеличить масштаб" aria-label="Увеличить">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2v6h6v1H8v6H7V9H1V8h6V2h1z"/></svg>
+      </button>
+      <button id="zoom-reset" class="btn-icon-sm" title="Сбросить масштаб" aria-label="Сбросить масштаб">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/></svg>
+      </button>
     </div>
   </div>
 
