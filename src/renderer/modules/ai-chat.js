@@ -719,8 +719,14 @@ function applyChanges(content, selection) {
   // Показываем спинер
   showSpinner();
 
-  // Сохраняем оригинальный текст
+  // Сохраняем оригинальный текст (весь документ)
   saveOriginalText(editor, selection);
+
+  // Сохраняем оригинальный текст выделенного фрагмента ДО изменений
+  const originalSelectedText = editor.state.doc.sliceString(selection.from, selection.to);
+  // Сохраняем полный оригинальный текст документа ДО изменений
+  const fullOriginalText = editor.state.doc.toString();
+  window._aiChatFullOriginalText = fullOriginalText;
 
   // Replace selected text
   editor.dispatch({
@@ -731,15 +737,11 @@ function applyChanges(content, selection) {
   // Скрываем спинер
   hideSpinner();
 
-  // Сохраняем полный оригинальный текст документа для возможного полного восстановления
-  const fullOriginalText = editor.state.doc.toString();
-  window._aiChatFullOriginalText = fullOriginalText;
-
   // Сохраняем контекст для возможного retry
   const context = {
     editor,
     selection,
-    originalText: editor.state.doc.sliceString(selection.from, selection.to),
+    originalText: originalSelectedText, // текст выделенного фрагмента до изменений
     fullOriginalText,
     lastMessage: window._aiChatLastMessage || (inputElement ? inputElement.value.trim() : '')
   };
