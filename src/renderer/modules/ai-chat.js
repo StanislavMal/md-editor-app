@@ -728,23 +728,62 @@ function applyChanges(content, selection) {
   // Скрываем спинер
   hideSpinner();
 
+  // Сохраняем контекст для возможного retry
+  const context = {
+    editor,
+    selection,
+    originalText: editor.state.doc.sliceString(selection.from, selection.to),
+    lastMessage: inputElement ? inputElement.value.trim() : ''
+  };
+  window._aiChatLastContext = context;
+
   // Показываем модальное окно обратной связи
   showFeedbackModal(
     () => {
       // Принять изменения - ничего не делаем, изменения уже применены
       console.log('[AI Chat] Изменения приняты');
+      // Очищаем контекст
+      window._aiChatLastContext = null;
     },
     () => {
-      // Попробовать ещё раз - пока не реализовано для чата
-      console.log('[AI Chat] Повторная генерация не поддерживается в режиме чата');
+      // Попробовать ещё раз - повторяем последний запрос
+      console.log('[AI Chat] Повторная генерация');
+      if (window._aiChatLastContext) {
+        const { editor, selection, originalText, lastMessage } = window._aiChatLastContext;
+        // Повторно вызываем AI с тем же запросом
+        handleEditingRetry(editor, selection, originalText, lastMessage);
+      }
     },
     () => {
       // Отменить изменения - текст уже восстановлен в handleCancel
       console.log('[AI Chat] Изменения отменены');
+      // Очищаем контекст
+      window._aiChatLastContext = null;
     }
   );
 
   // No additional message - AI response will show "Готово. Что ещё?"
+}
+
+// Handle editing retry
+function handleEditingRetry(editor, selection, originalText, lastMessage) {
+  if (!editor || !lastMessage) return;
+
+  // Показываем спинер
+  showSpinner();
+
+  // Восстанавливаем оригинальный текст перед повторной генерацией
+  editor.dispatch({
+    changes: { from: selection.from, to: selection.to, insert: originalText },
+    selection: { anchor: selection.from + originalText.length }
+  });
+
+  // Скрываем спинер
+  hideSpinner();
+
+  // Повторно вызываем AI с тем же запросом
+  const prompt = `Task: [${lastMessage}]\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:[\n${originalText}]`;
+  callAIAPI(prompt, 'edit', selection);
 }
 
 // Format message content (basic markdown support)

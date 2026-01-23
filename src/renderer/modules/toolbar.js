@@ -155,7 +155,7 @@ function startGeneration(editorView, text, hasSelection) {
   abortController = new AbortController();
 
   const aiButton = document.getElementById('btn-ai-format');
-  const originalText = aiButton.innerHTML;
+  const originalButtonText = aiButton.innerHTML;
 
   // Меняем кнопку на "Стоп"
   aiButton.innerHTML = '⏹️';
@@ -166,9 +166,23 @@ function startGeneration(editorView, text, hasSelection) {
   // Показываем спинер
   showSpinner();
 
-  // Сохраняем оригинальный текст
+  // Сохраняем оригинальный текст только если еще не сохранен (при первом вызове)
   const range = hasSelection ? editorView.state.selection.main : null;
-  saveOriginalText(editorView, range);
+  // Проверяем, не сохранен ли уже оригинальный текст для этого же редактора и выделения
+  if (!window._aiOriginalTextSaved) {
+    saveOriginalText(editorView, range);
+    window._aiOriginalTextSaved = true;
+  }
+
+  // Сохраняем параметры генерации для возможного retry
+  window._aiGenerationParams = {
+    editorView,
+    text,
+    hasSelection,
+    range,
+    textBefore: hasSelection ? editorView.state.doc.sliceString(0, range.from) : '',
+    textAfter: hasSelection ? editorView.state.doc.sliceString(range.to, editorView.state.doc.length) : ''
+  };
 
   console.log('[AI] Начинаем streaming форматирование текста...');
 
@@ -180,10 +194,8 @@ function startGeneration(editorView, text, hasSelection) {
     textBefore = editorView.state.doc.sliceString(0, range.from);
     textAfter = editorView.state.doc.sliceString(range.to, editorView.state.doc.length);
 
-    // Удаляем выделенный текст
-    editorView.dispatch({
-      changes: { from: range.from, to: range.to, insert: '' }
-    });
+    // НЕ удаляем выделенный текст, будем заменять его по мере генерации
+    // Оставим текст как есть, onChunk будет заменять весь документ
   }
 
   formatTextWithAIStreaming(
@@ -213,23 +225,71 @@ function startGeneration(editorView, text, hasSelection) {
       // Скрываем спинер
       hideSpinner();
 
-      // Показываем модальное окно обратной связи
-      showFeedbackModal(
-        () => {
-          // Принять изменения - ничего не делаем, изменения уже применены
-          console.log('[AI] Изменения приняты');
-        },
-        () => {
-          // Попробовать ещё раз - повторяем генерацию
-          console.log('[AI] Повторная генерация');
-          stopGeneration();
+    // Показываем модальное окно обратной связи
+    showFeedbackModal(
+      () => {
+        // Принять изменения - ничего не делаем, изменения уже применены
+        console.log('[AI] Изменения приняты');
+        // Сбрасываем флаг сохранения оригинального текста
+        window._aiOriginalTextSaved = false;
+        // Очищаем параметры генерации
+        window._aiGenerationParams = null;
+      },
+      () => {
+        // Попробовать ещё раз - повторяем генерацию с теми же параметрами
+        console.log('[AI] Повторная генерация');
+        // Не сбрасываем флаг, чтобы оригинальный текст остался для возможной отмены
+        // Останавливаем текущую генерацию
+        stopGeneration();
+        // Используем сохраненные параметры генерации
+        if (window._aiGenerationParams) {
+          const { editorView, text, hasSelection, range, textBefore, textAfter } = window._aiGenerationParams;
+          // Восстанавливаем оригинальный текст перед повторной генерацией
+          if (hasSelection && range) {
+            editorView.dispatch({
+              changes: { from: range.from, to: range.to, insert: text },
+              selection: { anchor: range.from + text.length }
+            });
+          } else {
+            // Для всего текста заменяем весь документ
+            editorView.dispatch({
+              changes: { from: 0, to: editorView.state.doc.length, insert: text },
+              selection: { anchor: text.length }
+            });
+          }
+          // Запускаем новую генерацию с теми же параметрами
           startGeneration(editorView, text, hasSelection);
-        },
-        () => {
-          // Отменить изменения - текст уже восстановлен в handleCancel
-          console.log('[AI] Изменения отменены');
+        } else {
+          // Если параметры не сохранены, используем текущий текст
+          let currentText;
+          let currentHasSelection = hasSelection;
+          if (hasSelection && range) {
+            const currentRange = editorView.state.selection.main;
+            if (!currentRange.empty) {
+              currentText = editorView.state.sliceDoc(currentRange.from, currentRange.to).trim();
+            } else {
+              currentText = editorView.state.doc.toString().trim();
+              currentHasSelection = false;
+            }
+          } else {
+            currentText = editorView.state.doc.toString().trim();
+          }
+          if (!currentText) {
+            alert('Нет текста для повторной генерации.');
+            return;
+          }
+          startGeneration(editorView, currentText, currentHasSelection);
         }
-      );
+      },
+      () => {
+        // Отменить изменения - текст будет восстановлен в handleCancel
+        console.log('[AI] Изменения отменены');
+        // Сбрасываем флаг сохранения оригинального текста
+        window._aiOriginalTextSaved = false;
+        // Очищаем параметры генерации
+        window._aiGenerationParams = null;
+      }
+    );
 
       stopGeneration();
     },
@@ -250,6 +310,10 @@ function startGeneration(editorView, text, hasSelection) {
       hideSpinner();
 
       alert(`Ошибка AI форматирования: ${error.message || 'Неизвестная ошибка'}`);
+      // Сбрасываем флаг сохранения оригинального текста при ошибке
+      window._aiOriginalTextSaved = false;
+      // Очищаем параметры генерации
+      window._aiGenerationParams = null;
       stopGeneration();
     }
   );
@@ -272,6 +336,9 @@ function stopGeneration() {
   aiButton.title = 'Форматировать текст через AI (MD AI)';
   aiButton.style.backgroundColor = '';
   aiButton.style.color = '';
+
+  // Не сбрасываем флаг сохранения оригинального текста здесь,
+  // так как он может понадобиться для отмены после завершения генерации
 }
 
 /**

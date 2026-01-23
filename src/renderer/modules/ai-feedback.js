@@ -47,10 +47,13 @@ function createFeedbackModal() {
     </div>
   `;
 
-  // Добавляем в контейнер редактора
+  // Добавляем в контейнер редактора или в body как fallback
   const editorPane = document.querySelector('.editor-pane');
   if (editorPane) {
     editorPane.appendChild(feedbackModal);
+  } else {
+    // Если .editor-pane не найден, добавляем в body
+    document.body.appendChild(feedbackModal);
   }
 
   // Обработчики кнопок
@@ -89,13 +92,17 @@ export function saveOriginalText(editorView, selection = null) {
     // Сохраняем весь текст
     originalText = editorView.state.doc.toString();
   }
+  console.log('[AI Feedback] Сохранен оригинальный текст, длина:', originalText.length, 'selection:', selection);
 }
 
 // Показать модальное окно обратной связи
 export function showFeedbackModal(onAccept, onRetry, onCancel) {
-  if (!feedbackModal) return;
+  if (!feedbackModal) {
+    // Если модальное окно не создано, создаем его
+    createFeedbackModal();
+  }
 
-  // Сохраняем коллбэки
+  // Сохраняем коллбэки (перезаписываем предыдущие)
   feedbackModal._onAccept = onAccept;
   feedbackModal._onRetry = onRetry;
   feedbackModal._onCancel = onCancel;
@@ -126,25 +133,34 @@ function handleRetry() {
 }
 
 function handleCancel() {
+  console.log('[AI Feedback] Отмена изменений, originalText длина:', originalText.length, 'currentEditorView:', !!currentEditorView, 'currentSelection:', currentSelection);
+  
+  // Вызываем коллбэк перед восстановлением текста и скрытием модального окна
+  if (feedbackModal._onCancel) {
+    feedbackModal._onCancel();
+  }
+
   // Восстанавливаем оригинальный текст
   if (currentEditorView && originalText !== '') {
     if (currentSelection) {
       // Заменяем только выделенный текст
+      console.log('[AI Feedback] Восстановление выделенного текста, from:', currentSelection.from, 'to:', currentSelection.to, 'длина текста:', originalText.length);
       currentEditorView.dispatch({
         changes: { from: currentSelection.from, to: currentSelection.to, insert: originalText },
         selection: { anchor: currentSelection.from + originalText.length }
       });
     } else {
       // Заменяем весь текст
+      console.log('[AI Feedback] Восстановление всего текста, длина документа:', currentEditorView.state.doc.length, 'длина оригинального текста:', originalText.length);
       currentEditorView.dispatch({
         changes: { from: 0, to: currentEditorView.state.doc.length, insert: originalText },
         selection: { anchor: originalText.length }
       });
     }
+    console.log('[AI Feedback] Текст восстановлен');
+  } else {
+    console.warn('[AI Feedback] Не удалось восстановить текст: currentEditorView отсутствует или originalText пуст');
   }
 
   hideFeedbackModal();
-  if (feedbackModal._onCancel) {
-    feedbackModal._onCancel();
-  }
 }
