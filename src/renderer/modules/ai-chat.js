@@ -4,6 +4,7 @@ import { getAISettingsPublic as getAISettings } from './ai.js';
 import { getEditorView } from './editor.js';
 import { chatWithAIStreaming } from './ai.js';
 import { updateEditorPaneFullwidth } from './state.js';
+import { showSpinner, hideSpinner, saveOriginalText, showFeedbackModal } from './ai-feedback.js';
 
 console.log('[Module Loaded] ai-chat.js');
 
@@ -702,11 +703,36 @@ function applyChanges(content, selection) {
   const editor = getEditorView();
   if (!editor) return;
 
+  // Показываем спинер
+  showSpinner();
+
+  // Сохраняем оригинальный текст
+  saveOriginalText(editor, selection);
+
   // Replace selected text
   editor.dispatch({
     changes: { from: selection.from, to: selection.to, insert: content },
     selection: { anchor: selection.from + content.length }
   });
+
+  // Скрываем спинер
+  hideSpinner();
+
+  // Показываем модальное окно обратной связи
+  showFeedbackModal(
+    () => {
+      // Принять изменения - ничего не делаем, изменения уже применены
+      console.log('[AI Chat] Изменения приняты');
+    },
+    () => {
+      // Попробовать ещё раз - пока не реализовано для чата
+      console.log('[AI Chat] Повторная генерация не поддерживается в режиме чата');
+    },
+    () => {
+      // Отменить изменения - текст уже восстановлен в handleCancel
+      console.log('[AI Chat] Изменения отменены');
+    }
+  );
 
   // No additional message - AI response will show "Готово. Что ещё?"
 }

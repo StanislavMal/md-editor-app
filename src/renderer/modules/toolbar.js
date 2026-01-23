@@ -7,6 +7,7 @@ import { handleQuickSave } from './file-io.js';
 import { formatTextWithAIStreaming, saveAISettings, getAISettingsPublic, testAPIConnection, getAvailableModels } from './ai.js';
 import { initializeWordCounter } from './word-counter.js';
 import { openSearchDialog } from './search-replace.js';
+import { showSpinner, hideSpinner, saveOriginalText, showFeedbackModal } from './ai-feedback.js';
 
 /**
  * Инициализирует все обработчики событий для кнопок на панели инструментов.
@@ -162,18 +163,22 @@ function startGeneration(editorView, text, hasSelection) {
   aiButton.style.backgroundColor = '#dc3545';
   aiButton.style.color = 'white';
 
+  // Показываем спинер
+  showSpinner();
+
+  // Сохраняем оригинальный текст
+  const range = hasSelection ? editorView.state.selection.main : null;
+  saveOriginalText(editorView, range);
+
   console.log('[AI] Начинаем streaming форматирование текста...');
 
-  const range = hasSelection ? editorView.state.selection.main : null;
   let textBefore = '';
   let textAfter = '';
-  let insertPosition = 0;
 
   if (hasSelection) {
     // Сохраняем текст до и после выделения
     textBefore = editorView.state.doc.sliceString(0, range.from);
     textAfter = editorView.state.doc.sliceString(range.to, editorView.state.doc.length);
-    insertPosition = range.from;
 
     // Удаляем выделенный текст
     editorView.dispatch({
@@ -204,6 +209,28 @@ function startGeneration(editorView, text, hasSelection) {
       if (abortController.signal.aborted) return;
 
       console.log('[AI] Streaming форматирование завершено успешно');
+
+      // Скрываем спинер
+      hideSpinner();
+
+      // Показываем модальное окно обратной связи
+      showFeedbackModal(
+        () => {
+          // Принять изменения - ничего не делаем, изменения уже применены
+          console.log('[AI] Изменения приняты');
+        },
+        () => {
+          // Попробовать ещё раз - повторяем генерацию
+          console.log('[AI] Повторная генерация');
+          stopGeneration();
+          startGeneration(editorView, text, hasSelection);
+        },
+        () => {
+          // Отменить изменения - текст уже восстановлен в handleCancel
+          console.log('[AI] Изменения отменены');
+        }
+      );
+
       stopGeneration();
     },
     // onError - вызывается при ошибке
@@ -218,6 +245,10 @@ function startGeneration(editorView, text, hasSelection) {
         textLength: text.length,
         text: text.substring(0, 100) + (text.length > 100 ? '...' : '')
       });
+
+      // Скрываем спинер
+      hideSpinner();
+
       alert(`Ошибка AI форматирования: ${error.message || 'Неизвестная ошибка'}`);
       stopGeneration();
     }

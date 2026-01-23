@@ -29,6 +29,7 @@ import { initializeToolbar } from './modules/toolbar.js';
 import { initializeState } from './modules/state.js';
 import { initializeFileIO } from './modules/file-io.js';
 import { initializeAIChat } from './modules/ai-chat.js';
+import { initializeAIFeedback } from './modules/ai-feedback.js';
 
 // --- НОВАЯ, БОЛЕЕ НАДЕЖНАЯ ЛОГИКА СИНХРОНИЗАЦИИ ---
 
@@ -128,6 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
     console.time('AI Chat Init');
     initializeAIChat();
     console.timeEnd('AI Chat Init');
+
+    console.log('[Renderer] 5.5. Initializing AI Feedback...');
+    console.time('AI Feedback Init');
+    initializeAIFeedback(editorView);
+    console.timeEnd('AI Feedback Init');
 
     console.log('[Renderer] 6. Setting up scroll sync...');
     console.time('Scroll Sync Setup');

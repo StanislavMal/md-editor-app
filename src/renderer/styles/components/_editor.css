@@ -63,7 +63,114 @@
 .cm-selectionBackground, .cm-content ::selection {
   background-color: rgba(9, 105, 218, 0.12) !important;
 }
-[data-theme="dark"] .cm-selectionBackground, 
+[data-theme="dark"] .cm-selectionBackground,
 [data-theme="dark"] .cm-content ::selection {
   background-color: rgba(58, 139, 255, 0.2) !important;
+}
+
+/* AI спинер оверлей - по центру экрана */
+.ai-spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Анимация загрузки AI */
+@keyframes ai-load {
+  0% {
+    transform: rotatez(0deg) scale(1);
+    border-style: solid;
+  }
+  50% {
+    transform: rotatez(180deg) scale(1.3);
+    border-style: dotted;
+  }
+  100% {
+    transform: rotatez(360deg) scale(0.9);
+  }
+}
+
+.ai-spinner-ring {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: transparent;
+  border: 8px solid #8250df; /* Фиолетовый цвет AI кнопки */
+  border-color: #8250df #0969da; /* Два цвета AI кнопки: фиолетовый и синий */
+  animation: ai-load 2s infinite;
+}
+/* AI модальное окно обратной связи */
+.ai-feedback-modal {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  display: none;
+  z-index: 1001;
+  padding: var(--spacing-sm);
+}
+
+.ai-feedback-content {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.ai-feedback-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-canvas);
+  color: var(--color-fg-default);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ai-feedback-btn:hover {
+  background: var(--color-canvas-inset);
+  border-color: var(--color-border-muted);
+}
+
+.ai-feedback-accept {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+  color: white;
+  border: none;
+}
+
+.ai-feedback-accept:hover {
+  background: linear-gradient(135deg, var(--color-accent-hover) 0%, var(--color-primary-hover) 100%);
+  color: white;
+}
+
+.ai-feedback-retry {
+  background: var(--color-canvas-inset);
+  border-color: var(--color-border-muted);
+}
+
+.ai-feedback-retry:hover {
+  background: var(--color-border-muted);
+}
+
+.ai-feedback-cancel {
+  background: var(--color-canvas-subtle);
+  border-color: var(--color-border-muted);
+  color: var(--color-fg-muted);
+}
+
+.ai-feedback-cancel:hover {
+  background: var(--color-border-muted);
+  color: var(--color-fg-default);
 }

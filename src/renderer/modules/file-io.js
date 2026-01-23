@@ -3,6 +3,7 @@ console.log('[Module Loaded] file-io.js');
 
 import { resetPreviewState, scheduleUpdate, getPreviewHtmlContent } from './preview.js';
 import { setCurrentFile, getCurrentFileName, setUnsavedChanges, hasUnsavedChanges, getCurrentFilePath, setFileLoadedFromDisk, isFileLoadedFromDisk } from './state.js';
+import { showSpinner, hideSpinner } from './ai-feedback.js';
 
 let editorView;
 
@@ -88,6 +89,9 @@ export async function handleQuickSave() {
     const quickSaveBtn = document.getElementById('quick-save-btn');
     setButtonLoading(quickSaveBtn, true, 'Сохранение...');
 
+    // Показываем спинер
+    showSpinner();
+
     try {
       // Используем IPC для перезаписи файла
       const result = await window.electronAPI.quickSaveFile(content, currentFilePath);
@@ -102,6 +106,8 @@ export async function handleQuickSave() {
       alert('Ошибка сохранения файла');
     } finally {
       setButtonLoading(quickSaveBtn, false, 'Сохранить');
+      // Скрываем спинер
+      hideSpinner();
     }
   } else {
     // Файл не был открыт в этой сессии, показываем диалог
@@ -124,6 +130,9 @@ async function handleSaveMd() {
 
   setButtonLoading(saveMdBtn, true, 'Сохранение...');
 
+  // Показываем спинер
+  showSpinner();
+
   try {
     let suggestedName = null;
     if (isFileLoadedFromDisk()) {
@@ -145,6 +154,8 @@ async function handleSaveMd() {
     alert(`Критическая ошибка сохранения: ${error.message}`);
   } finally {
     setButtonLoading(saveMdBtn, false, 'Сохранить как');
+    // Скрываем спинер
+    hideSpinner();
   }
 }
 
@@ -160,6 +171,9 @@ async function handleSavePdf() {
   }
 
   setButtonLoading(savePdfBtn, true, 'Экспорт...');
+
+  // Показываем спинер
+  showSpinner();
 
   try {
     let suggestedName = null;
@@ -178,6 +192,8 @@ async function handleSavePdf() {
     alert(`Ошибка сохранения: ${error.message}`);
   } finally {
     setButtonLoading(savePdfBtn, false, 'Экспорт PDF');
+    // Скрываем спинер
+    hideSpinner();
   }
 }
 
