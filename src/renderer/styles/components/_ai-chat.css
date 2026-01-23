@@ -156,8 +156,35 @@
   background: var(--bg-color, #ffffff);
 }
 
+.ai-chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ai-chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 1px;
+  opacity: 0.5;
+}
+
+.ai-chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+  opacity: 0.7;
+}
+
 [data-theme="dark"] .ai-chat-messages {
   background: var(--bg-color-dark, #1e1e1e);
+}
+
+[data-theme="dark"] .ai-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(64, 64, 64, 0.4);
+}
+
+[data-theme="dark"] .ai-chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 96, 96, 0.6);
 }
 
 .ai-chat-welcome {
@@ -283,6 +310,10 @@
   border-color: var(--accent-color, #007bff);
 }
 
+.ai-chat-input::-webkit-scrollbar {
+  display: none;
+}
+
 [data-theme="dark"] .ai-chat-input {
   background: var(--bg-color-dark, #1e1e1e);
   border-color: var(--border-color-dark, #3e3e42);
@@ -290,27 +321,35 @@
 }
 
 .ai-chat-send-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 6px;
-  background: var(--accent-color, #007bff);
+  border-radius: var(--border-radius);
+  background: var(--color-primary);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .ai-chat-send-btn:hover:not(:disabled) {
-  background: var(--accent-hover, #0056b3);
+  background: var(--color-primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.ai-chat-send-btn:active:not(:disabled) {
+  background: var(--color-primary-active);
+  transform: scale(0.95);
 }
 
 .ai-chat-send-btn:disabled {
-  background: var(--text-color-secondary, #6c757d);
+  background: var(--color-fg-muted);
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .ai-chat-send-btn svg {
@@ -416,31 +455,7 @@
   box-shadow: 0 1px 2px rgba(0, 123, 255, 0.3);
 }
 
-/* Scrollbar */
-.ai-chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
 
-.ai-chat-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.ai-chat-messages::-webkit-scrollbar-thumb {
-  background: var(--border-color, #ced4da);
-  border-radius: 3px;
-}
-
-.ai-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--text-color-secondary, #6c757d);
-}
-
-[data-theme="dark"] .ai-chat-messages::-webkit-scrollbar-thumb {
-  background: var(--border-color-dark, #3e3e42);
-}
-
-[data-theme="dark"] .ai-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--text-color-secondary-dark, #cccccc);
-}
 
 /* Loading animation */
 .ai-message-loading {
