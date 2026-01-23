@@ -561,6 +561,9 @@ async function callAIAPI(message, mode, selection = null) {
     return;
   }
 
+  // Показываем спинер для AI операций
+  showSpinner();
+
   // Add loading message
   const loadingMessageId = addMessage('assistant', '', true);
 
@@ -589,6 +592,9 @@ async function callAIAPI(message, mode, selection = null) {
         updateMessage(loadingMessageId, accumulatedText, true);
       },
       (finalText) => {
+        // Скрываем спинер при завершении
+        hideSpinner();
+
         updateMessage(loadingMessageId, finalText, false);
 
         // For editing mode, apply changes immediately
@@ -599,11 +605,15 @@ async function callAIAPI(message, mode, selection = null) {
       },
       (error) => {
         console.error('[AI Chat] API Error:', error);
+        // Скрываем спинер при ошибке
+        hideSpinner();
         updateMessage(loadingMessageId, `Ошибка: ${error.message}`, false);
       }
     );
   } catch (error) {
     console.error('[AI Chat] Call Error:', error);
+    // Скрываем спинер при ошибке
+    hideSpinner();
     updateMessage(loadingMessageId, `Ошибка: ${error.message}`, false);
   }
 }
