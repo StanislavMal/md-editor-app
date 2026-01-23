@@ -85,14 +85,9 @@ export function saveOriginalText(editorView, selection = null) {
   currentEditorView = editorView;
   currentSelection = selection;
 
-  if (selection) {
-    // Сохраняем только выделенный текст
-    originalText = editorView.state.doc.sliceString(selection.from, selection.to);
-  } else {
-    // Сохраняем весь текст
-    originalText = editorView.state.doc.toString();
-  }
-  console.log('[AI Feedback] Сохранен оригинальный текст, длина:', originalText.length, 'selection:', selection);
+  // Всегда сохраняем весь текст документа для возможности полного восстановления
+  originalText = editorView.state.doc.toString();
+  console.log('[AI Feedback] Сохранен оригинальный текст (весь документ), длина:', originalText.length, 'selection:', selection);
 }
 
 // Показать модальное окно обратной связи
@@ -140,23 +135,13 @@ function handleCancel() {
     feedbackModal._onCancel();
   }
 
-  // Восстанавливаем оригинальный текст
+  // Восстанавливаем оригинальный текст (весь документ)
   if (currentEditorView && originalText !== '') {
-    if (currentSelection) {
-      // Заменяем только выделенный текст
-      console.log('[AI Feedback] Восстановление выделенного текста, from:', currentSelection.from, 'to:', currentSelection.to, 'длина текста:', originalText.length);
-      currentEditorView.dispatch({
-        changes: { from: currentSelection.from, to: currentSelection.to, insert: originalText },
-        selection: { anchor: currentSelection.from + originalText.length }
-      });
-    } else {
-      // Заменяем весь текст
-      console.log('[AI Feedback] Восстановление всего текста, длина документа:', currentEditorView.state.doc.length, 'длина оригинального текста:', originalText.length);
-      currentEditorView.dispatch({
-        changes: { from: 0, to: currentEditorView.state.doc.length, insert: originalText },
-        selection: { anchor: originalText.length }
-      });
-    }
+    console.log('[AI Feedback] Восстановление всего документа, длина документа:', currentEditorView.state.doc.length, 'длина оригинального текста:', originalText.length);
+    currentEditorView.dispatch({
+      changes: { from: 0, to: currentEditorView.state.doc.length, insert: originalText },
+      selection: { anchor: originalText.length }
+    });
     console.log('[AI Feedback] Текст восстановлен');
   } else {
     console.warn('[AI Feedback] Не удалось восстановить текст: currentEditorView отсутствует или originalText пуст');

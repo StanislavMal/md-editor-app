@@ -731,11 +731,16 @@ function applyChanges(content, selection) {
   // Скрываем спинер
   hideSpinner();
 
+  // Сохраняем полный оригинальный текст документа для возможного полного восстановления
+  const fullOriginalText = editor.state.doc.toString();
+  window._aiChatFullOriginalText = fullOriginalText;
+
   // Сохраняем контекст для возможного retry
   const context = {
     editor,
     selection,
     originalText: editor.state.doc.sliceString(selection.from, selection.to),
+    fullOriginalText,
     lastMessage: window._aiChatLastMessage || (inputElement ? inputElement.value.trim() : '')
   };
   window._aiChatLastContext = context;
@@ -775,11 +780,24 @@ function handleEditingRetry(editor, selection, originalText, lastMessage) {
   // Показываем спинер
   showSpinner();
 
-  // Восстанавливаем оригинальный текст перед повторной генерацией
-  editor.dispatch({
-    changes: { from: selection.from, to: selection.to, insert: originalText },
-    selection: { anchor: selection.from + originalText.length }
-  });
+  // Восстанавливаем полный оригинальный текст документа перед повторной генерацией
+  const fullOriginalText = window._aiChatFullOriginalText;
+  if (fullOriginalText) {
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: fullOriginalText },
+      selection: { anchor: 0 }
+    });
+    // Восстанавливаем выделение
+    editor.dispatch({
+      selection: { anchor: selection.from, head: selection.to }
+    });
+  } else {
+    // Fallback: восстанавливаем только выделенный фрагмент
+    editor.dispatch({
+      changes: { from: selection.from, to: selection.to, insert: originalText },
+      selection: { anchor: selection.from + originalText.length }
+    });
+  }
 
   // Скрываем спинер
   hideSpinner();
