@@ -174,6 +174,11 @@ function startGeneration(editorView, text, hasSelection) {
     window._aiOriginalTextSaved = true;
   }
 
+  // Сохраняем полный оригинальный текст документа для возможного полного восстановления
+  if (!window._aiFullOriginalText) {
+    window._aiFullOriginalText = editorView.state.doc.toString();
+  }
+
   // Сохраняем параметры генерации для возможного retry
   window._aiGenerationParams = {
     editorView,
@@ -189,13 +194,16 @@ function startGeneration(editorView, text, hasSelection) {
   let textBefore = '';
   let textAfter = '';
 
-  if (hasSelection) {
+  // Если есть сохраненные параметры для retry, используем их
+  if (window._aiRetryParams) {
+    textBefore = window._aiRetryParams.textBefore;
+    textAfter = window._aiRetryParams.textAfter;
+    // Очищаем после использования
+    window._aiRetryParams = null;
+  } else if (hasSelection) {
     // Сохраняем текст до и после выделения
     textBefore = editorView.state.doc.sliceString(0, range.from);
     textAfter = editorView.state.doc.sliceString(range.to, editorView.state.doc.length);
-
-    // НЕ удаляем выделенный текст, будем заменять его по мере генерации
-    // Оставим текст как есть, onChunk будет заменять весь документ
   }
 
   formatTextWithAIStreaming(
@@ -234,28 +242,31 @@ function startGeneration(editorView, text, hasSelection) {
         window._aiOriginalTextSaved = false;
         // Очищаем параметры генерации
         window._aiGenerationParams = null;
+        // Очищаем полный оригинальный текст
+        window._aiFullOriginalText = null;
       },
       () => {
-        // Попробовать ещё раз - повторяем генерацию с теми же параметрами
-        console.log('[AI] Повторная генерация');
+        // Попробовать ещё раз - повторяем генерацию с самого начала
+        console.log('[AI] Повторная генерация с восстановлением исходного текста');
         // Не сбрасываем флаг, чтобы оригинальный текст остался для возможной отмены
         // Останавливаем текущую генерацию
         stopGeneration();
         // Используем сохраненные параметры генерации
-        if (window._aiGenerationParams) {
-          const { editorView, text, hasSelection, range, textBefore, textAfter } = window._aiGenerationParams;
-          // Восстанавливаем оригинальный текст перед повторной генерацией
+        if (window._aiGenerationParams && window._aiFullOriginalText !== undefined) {
+          const { editorView, text, hasSelection, range } = window._aiGenerationParams;
+          console.log('[AI] Retry с восстановлением полного текста:', { hasSelection, range, textLength: text.length });
+          // Восстанавливаем полный оригинальный текст документа
+          editorView.dispatch({
+            changes: { from: 0, to: editorView.state.doc.length, insert: window._aiFullOriginalText },
+            selection: { anchor: 0 }
+          });
+          // Восстанавливаем выделение (если было)
           if (hasSelection && range) {
             editorView.dispatch({
-              changes: { from: range.from, to: range.to, insert: text },
-              selection: { anchor: range.from + text.length }
+              selection: { anchor: range.from, head: range.to }
             });
-          } else {
-            // Для всего текста заменяем весь документ
-            editorView.dispatch({
-              changes: { from: 0, to: editorView.state.doc.length, insert: text },
-              selection: { anchor: text.length }
-            });
+            // Текст выделенного фрагмента должен быть таким же, как при первом вызове
+            // (он уже восстановлен в полном тексте)
           }
           // Запускаем новую генерацию с теми же параметрами
           startGeneration(editorView, text, hasSelection);
@@ -288,6 +299,8 @@ function startGeneration(editorView, text, hasSelection) {
         window._aiOriginalTextSaved = false;
         // Очищаем параметры генерации
         window._aiGenerationParams = null;
+        // Очищаем полный оригинальный текст
+        window._aiFullOriginalText = null;
       }
     );
 
@@ -314,6 +327,8 @@ function startGeneration(editorView, text, hasSelection) {
       window._aiOriginalTextSaved = false;
       // Очищаем параметры генерации
       window._aiGenerationParams = null;
+      // Очищаем полный оригинальный текст
+      window._aiFullOriginalText = null;
       stopGeneration();
     }
   );

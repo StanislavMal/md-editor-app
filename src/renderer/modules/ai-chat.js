@@ -547,6 +547,9 @@ async function handleEditingMode(message) {
     modeSelection = { from: 0, to: textToEdit.length };
   }
 
+  // Сохраняем сообщение для возможного retry
+  window._aiChatLastMessage = message;
+
   await callAIAPI(prompt, 'edit', modeSelection);
 }
 
@@ -733,7 +736,7 @@ function applyChanges(content, selection) {
     editor,
     selection,
     originalText: editor.state.doc.sliceString(selection.from, selection.to),
-    lastMessage: inputElement ? inputElement.value.trim() : ''
+    lastMessage: window._aiChatLastMessage || (inputElement ? inputElement.value.trim() : '')
   };
   window._aiChatLastContext = context;
 
