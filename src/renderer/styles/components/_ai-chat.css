@@ -722,6 +722,14 @@
   background: var(--border-color-dark, #3e3e42);
 }
 
+/* UI Lock State */
+.ai-ui-locked {
+  pointer-events: none;
+  opacity: 0.3;
+  filter: grayscale(80%) blur(0.5px);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .ai-chat-panel {

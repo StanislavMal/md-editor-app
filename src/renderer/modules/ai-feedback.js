@@ -102,6 +102,9 @@ export function showFeedbackModal(onAccept, onRetry, onCancel) {
   feedbackModal._onRetry = onRetry;
   feedbackModal._onCancel = onCancel;
 
+  // Блокируем UI элементы
+  lockUIElements();
+
   feedbackModal.style.display = 'flex';
 }
 
@@ -112,8 +115,58 @@ export function hideFeedbackModal() {
   }
 }
 
+// Заблокировать UI элементы
+function lockUIElements() {
+  // Блокируем панель AI чата
+  const aiChatPanel = document.getElementById('ai-chat-panel');
+  if (aiChatPanel) {
+    aiChatPanel.classList.add('ai-ui-locked');
+  }
+
+  // Блокируем все кнопки AI в шапке
+  const aiButtons = [
+    document.getElementById('btn-ai-chat'),
+    document.getElementById('btn-ai-format')
+  ];
+
+  aiButtons.forEach(button => {
+    if (button) {
+      button.classList.add('ai-ui-locked');
+      button.disabled = true;
+    }
+  });
+
+  console.log('[AI Feedback] UI элементы заблокированы');
+}
+
+// Разблокировать UI элементы
+function unlockUIElements() {
+  // Разблокируем панель AI чата
+  const aiChatPanel = document.getElementById('ai-chat-panel');
+  if (aiChatPanel) {
+    aiChatPanel.classList.remove('ai-ui-locked');
+  }
+
+  // Разблокируем все кнопки AI в шапке
+  const aiButtons = [
+    document.getElementById('btn-ai-chat'),
+    document.getElementById('btn-ai-format')
+  ];
+
+  aiButtons.forEach(button => {
+    if (button) {
+      button.classList.remove('ai-ui-locked');
+      button.disabled = false;
+    }
+  });
+
+  console.log('[AI Feedback] UI элементы разблокированы');
+}
+
 // Обработчики кнопок
 function handleAccept() {
+  // Разблокируем UI перед вызовом коллбэка
+  unlockUIElements();
   hideFeedbackModal();
   if (feedbackModal._onAccept) {
     feedbackModal._onAccept();
@@ -121,6 +174,7 @@ function handleAccept() {
 }
 
 function handleRetry() {
+  // UI остается заблокированным, скрываем только модальное окно
   hideFeedbackModal();
   if (feedbackModal._onRetry) {
     feedbackModal._onRetry();
@@ -129,7 +183,10 @@ function handleRetry() {
 
 function handleCancel() {
   console.log('[AI Feedback] Отмена изменений, originalText длина:', originalText.length, 'currentEditorView:', !!currentEditorView, 'currentSelection:', currentSelection);
-  
+
+  // Разблокируем UI перед вызовом коллбэка
+  unlockUIElements();
+
   // Вызываем коллбэк перед восстановлением текста и скрытием модального окна
   if (feedbackModal._onCancel) {
     feedbackModal._onCancel();
