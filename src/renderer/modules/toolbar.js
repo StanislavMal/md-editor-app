@@ -169,22 +169,24 @@ function startGeneration(editorView, text, hasSelection) {
   // Сохраняем оригинальный текст только если еще не сохранен (при первом вызове)
   const range = hasSelection ? editorView.state.selection.main : null;
   // Проверяем, не сохранен ли уже оригинальный текст для этого же редактора и выделения
-  if (!window._aiOriginalTextSaved) {
+  if (!window._toolbarAiOriginalTextSaved) {
     saveOriginalText(editorView, range);
-    window._aiOriginalTextSaved = true;
+    window._toolbarAiOriginalTextSaved = true;
   }
 
   // Сохраняем полный оригинальный текст документа для возможного полного восстановления
-  if (!window._aiFullOriginalText) {
-    window._aiFullOriginalText = editorView.state.doc.toString();
+  if (!window._toolbarAiFullOriginalText) {
+    window._toolbarAiFullOriginalText = editorView.state.doc.toString();
   }
 
   // Сохраняем параметры генерации для возможного retry
-  window._aiGenerationParams = {
+  window._toolbarAiGenerationParams = {
     editorView,
     text,
     hasSelection,
     range,
+    selectionFrom: hasSelection ? range.from : 0,
+    selectionTo: hasSelection ? range.to : text.length,
     textBefore: hasSelection ? editorView.state.doc.sliceString(0, range.from) : '',
     textAfter: hasSelection ? editorView.state.doc.sliceString(range.to, editorView.state.doc.length) : ''
   };
@@ -206,6 +208,11 @@ function startGeneration(editorView, text, hasSelection) {
     textAfter = editorView.state.doc.sliceString(range.to, editorView.state.doc.length);
   }
 
+  // Сохраняем текущую позицию курсора для установки в конце генерации
+  const originalSelection = editorView.state.selection.main;
+  let finalAnchor = originalSelection.anchor;
+  let finalHead = originalSelection.head;
+
   formatTextWithAIStreaming(
     text,
     // onChunk - вызывается при получении очередного кусочка текста
@@ -213,15 +220,32 @@ function startGeneration(editorView, text, hasSelection) {
       if (abortController.signal.aborted) return;
 
       const fullText = hasSelection ? textBefore + chunkText + textAfter : chunkText;
+      const docLength = fullText.length;
 
-      // Заменяем весь документ
+      // Заменяем весь документ, сохраняя текущую позицию курсора если возможно
+      let safeAnchor = 0;
+      let safeHead = 0;
+
+      try {
+        const currentSelection = editorView.state.selection.main;
+        // Проверяем, что текущая позиция курсора валидна для нового документа
+        if (currentSelection.anchor <= docLength && currentSelection.head <= docLength) {
+          safeAnchor = currentSelection.anchor;
+          safeHead = currentSelection.head;
+        }
+        // Иначе оставляем в начале
+      } catch (error) {
+        // Если ошибка с selection, оставляем в начале
+        console.warn('[AI] Selection error during generation:', error.message);
+      }
+
       editorView.dispatch({
         changes: {
           from: 0,
           to: editorView.state.doc.length,
           insert: fullText
         },
-        selection: { anchor: hasSelection ? textBefore.length + chunkText.length : chunkText.length }
+        selection: { anchor: safeAnchor, head: safeHead }
       });
     },
     // onComplete - вызывается при завершении генерации
@@ -239,11 +263,11 @@ function startGeneration(editorView, text, hasSelection) {
         // Принять изменения - ничего не делаем, изменения уже применены
         console.log('[AI] Изменения приняты');
         // Сбрасываем флаг сохранения оригинального текста
-        window._aiOriginalTextSaved = false;
+        window._toolbarAiOriginalTextSaved = false;
         // Очищаем параметры генерации
-        window._aiGenerationParams = null;
+        window._toolbarAiGenerationParams = null;
         // Очищаем полный оригинальный текст
-        window._aiFullOriginalText = null;
+        window._toolbarAiFullOriginalText = null;
       },
       () => {
         // Попробовать ещё раз - повторяем генерацию с самого начала
@@ -252,22 +276,14 @@ function startGeneration(editorView, text, hasSelection) {
         // Останавливаем текущую генерацию
         stopGeneration();
         // Используем сохраненные параметры генерации
-        if (window._aiGenerationParams && window._aiFullOriginalText !== undefined) {
-          const { editorView, text, hasSelection, range } = window._aiGenerationParams;
-          console.log('[AI] Retry с восстановлением полного текста:', { hasSelection, range, textLength: text.length });
+        if (window._toolbarAiGenerationParams && window._toolbarAiFullOriginalText !== undefined) {
+          const { editorView, text, hasSelection, selectionFrom, selectionTo } = window._toolbarAiGenerationParams;
+          console.log('[AI] Retry с восстановлением полного текста:', { hasSelection, selectionFrom, selectionTo, textLength: text.length });
           // Восстанавливаем полный оригинальный текст документа
           editorView.dispatch({
-            changes: { from: 0, to: editorView.state.doc.length, insert: window._aiFullOriginalText },
-            selection: { anchor: 0 }
+            changes: { from: 0, to: editorView.state.doc.length, insert: window._toolbarAiFullOriginalText },
+            selection: { anchor: hasSelection ? selectionFrom : 0, head: hasSelection ? selectionTo : 0 }
           });
-          // Восстанавливаем выделение (если было)
-          if (hasSelection && range) {
-            editorView.dispatch({
-              selection: { anchor: range.from, head: range.to }
-            });
-            // Текст выделенного фрагмента должен быть таким же, как при первом вызове
-            // (он уже восстановлен в полном тексте)
-          }
           // Запускаем новую генерацию с теми же параметрами
           startGeneration(editorView, text, hasSelection);
         } else {
@@ -296,11 +312,11 @@ function startGeneration(editorView, text, hasSelection) {
         // Отменить изменения - текст будет восстановлен в handleCancel
         console.log('[AI] Изменения отменены');
         // Сбрасываем флаг сохранения оригинального текста
-        window._aiOriginalTextSaved = false;
+        window._toolbarAiOriginalTextSaved = false;
         // Очищаем параметры генерации
-        window._aiGenerationParams = null;
+        window._toolbarAiGenerationParams = null;
         // Очищаем полный оригинальный текст
-        window._aiFullOriginalText = null;
+        window._toolbarAiFullOriginalText = null;
       }
     );
 
@@ -324,11 +340,11 @@ function startGeneration(editorView, text, hasSelection) {
 
       alert(`Ошибка AI форматирования: ${error.message || 'Неизвестная ошибка'}`);
       // Сбрасываем флаг сохранения оригинального текста при ошибке
-      window._aiOriginalTextSaved = false;
+      window._toolbarAiOriginalTextSaved = false;
       // Очищаем параметры генерации
-      window._aiGenerationParams = null;
+      window._toolbarAiGenerationParams = null;
       // Очищаем полный оригинальный текст
-      window._aiFullOriginalText = null;
+      window._toolbarAiFullOriginalText = null;
       stopGeneration();
     }
   );
