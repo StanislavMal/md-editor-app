@@ -166,6 +166,10 @@ function startGeneration(editorView, text, hasSelection) {
   // Показываем спинер
   showSpinner();
 
+  // Блокируем редактор во время генерации
+  editorView.contentDOM.style.pointerEvents = 'none';
+  editorView.contentDOM.style.opacity = '0.7';
+
   // Сохраняем оригинальный текст только если еще не сохранен (при первом вызове)
   const range = hasSelection ? editorView.state.selection.main : null;
   // Проверяем, не сохранен ли уже оригинальный текст для этого же редактора и выделения
@@ -254,8 +258,28 @@ function startGeneration(editorView, text, hasSelection) {
 
       console.log('[AI] Streaming форматирование завершено успешно');
 
+      // Устанавливаем курсор на отредактированную область
+      if (hasSelection) {
+        // Для выделенного фрагмента - выделяем новый сгенерированный текст
+        const generatedStart = textBefore.length;
+        const generatedEnd = generatedStart + finalText.length;
+        editorView.dispatch({
+          selection: { anchor: generatedStart, head: generatedEnd }
+        });
+      } else {
+        // Для всего документа - курсор в конце
+        const docLength = editorView.state.doc.length;
+        editorView.dispatch({
+          selection: { anchor: docLength, head: docLength }
+        });
+      }
+
       // Скрываем спинер
       hideSpinner();
+
+      // Разблокируем редактор
+      editorView.contentDOM.style.pointerEvents = '';
+      editorView.contentDOM.style.opacity = '';
 
     // Показываем модальное окно обратной связи
     showFeedbackModal(
@@ -345,6 +369,11 @@ function startGeneration(editorView, text, hasSelection) {
       window._toolbarAiGenerationParams = null;
       // Очищаем полный оригинальный текст
       window._toolbarAiFullOriginalText = null;
+
+      // Разблокируем редактор при ошибке
+      editorView.contentDOM.style.pointerEvents = '';
+      editorView.contentDOM.style.opacity = '';
+
       stopGeneration();
     }
   );
@@ -367,6 +396,13 @@ function stopGeneration() {
   aiButton.title = 'Форматировать текст через AI (MD AI)';
   aiButton.style.backgroundColor = '';
   aiButton.style.color = '';
+
+  // Разблокируем редактор
+  const editorView = getEditorView();
+  if (editorView) {
+    editorView.contentDOM.style.pointerEvents = '';
+    editorView.contentDOM.style.opacity = '';
+  }
 
   // Не сбрасываем флаг сохранения оригинального текста здесь,
   // так как он может понадобиться для отмены после завершения генерации
