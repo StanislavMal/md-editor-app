@@ -223,7 +223,20 @@ function startGeneration(editorView, text, hasSelection) {
     (chunkText) => {
       if (abortController.signal.aborted) return;
 
-      const fullText = hasSelection ? textBefore + chunkText + textAfter : chunkText;
+      // Очищаем промежуточный текст от маркеров ----START и ----END
+      // Просто удаляем маркеры, не пытаясь извлекать текст между ними
+      // Это гарантирует, что маркеры не попадут в редактор
+      let cleanedChunkText = chunkText;
+      
+      // Удаляем маркеры ----START и ----END
+      cleanedChunkText = cleanedChunkText
+        .replace(/^\s*----START\s*/, '') // Убираем ----START в начале
+        .replace(/\s*----END\s*$/, '') // Убираем ----END в конце
+        .replace(/\s*----START\s*/g, ' ') // Убираем все вхождения ----START
+        .replace(/\s*----END\s*/g, ' ') // Убираем все вхождения ----END
+        .trim();
+
+      const fullText = hasSelection ? textBefore + cleanedChunkText + textAfter : cleanedChunkText;
       const docLength = fullText.length;
 
       // Заменяем весь документ, сохраняя текущую позицию курсора если возможно

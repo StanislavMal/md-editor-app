@@ -263,7 +263,7 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
         accumulatedText += content;
         onChunk(accumulatedText);
       }
-      onComplete(cleanTextArtifacts(provider === 'deepseek' || provider === 'gemini' ? cleanMarkdownWrapper(accumulatedText) : accumulatedText));
+      onComplete(cleanTextArtifacts(cleanMarkdownWrapper(accumulatedText)));
       return;
     }
 
@@ -485,8 +485,8 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
         }
         results.push(formattedChunk);
 
-        // Отправляем промежуточный результат
-        const currentResult = results.join('\n\n');
+        // Отправляем промежуточный результат (очищаем от маркеров)
+        const currentResult = cleanMarkdownWrapper(results.join('\n\n'));
         onChunk(currentResult);
 
         // Небольшая пауза между чанками для лучшего UX
@@ -494,7 +494,7 @@ export async function formatTextWithAIStreaming(text, onChunk, onComplete, onErr
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
-      onComplete(cleanTextArtifacts(results.join('\n\n')));
+      onComplete(cleanTextArtifacts(cleanMarkdownWrapper(results.join('\n\n'))));
     }
   } catch (error) {
     console.error('[AI] Ошибка streaming форматирования:', error);
