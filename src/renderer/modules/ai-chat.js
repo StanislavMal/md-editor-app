@@ -538,12 +538,12 @@ async function handleEditingMode(message) {
   if (hasSelection) {
     // Edit selected text
     textToEdit = editor.state.doc.sliceString(selection.from, selection.to);
-    prompt = `Task: [${message}]\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:[\n${textToEdit}]`;
+    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
     modeSelection = selection;
   } else {
     // Edit entire document content
     textToEdit = editor.state.doc.toString();
-    prompt = `Task: ${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
+    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
     modeSelection = { from: 0, to: textToEdit.length };
   }
 
@@ -719,40 +719,44 @@ function applyChanges(content, selection) {
   // Показываем спинер
   showSpinner();
 
-  // Сохраняем оригинальный текст (весь документ)
-  saveOriginalText(editor, selection);
+  // Очищаем от возможных артефактов AI
+  const cleanContent = content
+    .replace(/^Text to edit:[\s\n]*/, '') // Убираем возможные остатки промпта
+    .replace(/^\[[\s\n]*/, '') // Убираем начальные [
+    .replace(/[\s\n]*\]$/, '') // Убираем конечные ]
+    .trim();
 
-  // Сохраняем оригинальный текст выделенного фрагмента ДО изменений
+  // Сохраняем контекст ПЕРЕД изменениями
   const originalSelectedText = editor.state.doc.sliceString(selection.from, selection.to);
-  // Сохраняем полный оригинальный текст документа ДО изменений
   const fullOriginalText = editor.state.doc.toString();
-  window._aiChatFullOriginalText = fullOriginalText;
-
-  // Replace selected text
-  editor.dispatch({
-    changes: { from: selection.from, to: selection.to, insert: content },
-    selection: { anchor: selection.from + content.length }
-  });
-
-  // Скрываем спинер
-  hideSpinner();
-
-  // Сохраняем контекст для возможного retry
   const context = {
     editor,
-    selection,
-    originalText: originalSelectedText, // текст выделенного фрагмента до изменений
+    selection: { ...selection }, // Копия selection
+    originalText: originalSelectedText,
     fullOriginalText,
     lastMessage: window._aiChatLastMessage || (inputElement ? inputElement.value.trim() : '')
   };
   window._aiChatLastContext = context;
+  window._aiChatFullOriginalText = fullOriginalText;
+
+  // Сохраняем оригинальный текст (весь документ)
+  saveOriginalText(editor, selection);
+
+  // Replace selected text
+  editor.dispatch({
+    changes: { from: selection.from, to: selection.to, insert: cleanContent },
+    selection: { anchor: selection.from + cleanContent.length }
+  });
+
+  // Скрываем спинер
+  hideSpinner();
 
   // Показываем модальное окно обратной связи
   showFeedbackModal(
     () => {
       // Принять изменения - ничего не делаем, изменения уже применены
       console.log('[AI Chat] Изменения приняты');
-      // Очищаем контекст
+      // Очищаем контекст только при принятии
       window._aiChatLastContext = null;
     },
     () => {
@@ -760,14 +764,19 @@ function applyChanges(content, selection) {
       console.log('[AI Chat] Повторная генерация');
       if (window._aiChatLastContext) {
         const { editor, selection, originalText, lastMessage } = window._aiChatLastContext;
-        // Повторно вызываем AI с тем же запросом
         handleEditingRetry(editor, selection, originalText, lastMessage);
       }
     },
     () => {
-      // Отменить изменения - текст уже восстановлен в handleCancel
+      // Отменить изменения - восстанавливаем текст
       console.log('[AI Chat] Изменения отменены');
-      // Очищаем контекст
+      if (window._aiChatLastContext) {
+        const { fullOriginalText, selection } = window._aiChatLastContext;
+        editor.dispatch({
+          changes: { from: 0, to: editor.state.doc.length, insert: fullOriginalText },
+          selection: { anchor: selection.from, head: selection.to }
+        });
+      }
       window._aiChatLastContext = null;
     }
   );
@@ -779,34 +788,42 @@ function applyChanges(content, selection) {
 function handleEditingRetry(editor, selection, originalText, lastMessage) {
   if (!editor || !lastMessage) return;
 
-  // Показываем спинер
   showSpinner();
 
-  // Восстанавливаем полный оригинальный текст документа перед повторной генерацией
-  const fullOriginalText = window._aiChatFullOriginalText;
-  if (fullOriginalText) {
+  // Находим текущую позицию оригинального текста в документе
+  const currentDocText = editor.state.doc.toString();
+  const originalDocText = window._aiChatFullOriginalText;
+
+  if (originalDocText && currentDocText !== originalDocText) {
+    // Восстанавливаем полный оригинальный текст
     editor.dispatch({
-      changes: { from: 0, to: editor.state.doc.length, insert: fullOriginalText },
-      selection: { anchor: 0 }
+      changes: { from: 0, to: editor.state.doc.length, insert: originalDocText }
     });
-    // Восстанавливаем выделение
-    editor.dispatch({
-      selection: { anchor: selection.from, head: selection.to }
-    });
-  } else {
-    // Fallback: восстанавливаем только выделенный фрагмент
-    editor.dispatch({
-      changes: { from: selection.from, to: selection.to, insert: originalText },
-      selection: { anchor: selection.from + originalText.length }
-    });
+
+    // Заново находим позицию выделенного фрагмента
+    const selectionStart = originalDocText.indexOf(originalText);
+    if (selectionStart !== -1) {
+      const newSelection = {
+        from: selectionStart,
+        to: selectionStart + originalText.length
+      };
+
+      editor.dispatch({
+        selection: { anchor: newSelection.from, head: newSelection.to }
+      });
+
+      // Повторно вызываем AI с обновленным selection
+      const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${originalText}`;
+      callAIAPI(prompt, 'edit', newSelection);
+      return;
+    }
   }
 
-  // Скрываем спинер
-  hideSpinner();
-
-  // Повторно вызываем AI с тем же запросом
-  const prompt = `Task: [${lastMessage}]\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:[\n${originalText}]`;
+  // Fallback на старый метод
+  const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${originalText}`;
   callAIAPI(prompt, 'edit', selection);
+
+  hideSpinner();
 }
 
 // Format message content (basic markdown support)
