@@ -567,6 +567,13 @@ async function callAIAPI(message, mode, selection = null) {
   // Показываем спинер для AI операций
   showSpinner();
 
+  // Блокируем редактор во время генерации
+  const editor = getEditorView();
+  if (editor && mode === 'edit') {
+    editor.contentDOM.style.pointerEvents = 'none';
+    editor.contentDOM.style.opacity = '0.7';
+  }
+
   // Add loading message
   const loadingMessageId = addMessage('assistant', '', true);
 
@@ -595,16 +602,22 @@ async function callAIAPI(message, mode, selection = null) {
         updateMessage(loadingMessageId, accumulatedText, true);
       },
       (finalText) => {
-        // Скрываем спинер при завершении
-        hideSpinner();
+      // Скрываем спинер при завершении
+      hideSpinner();
 
-        updateMessage(loadingMessageId, finalText, false);
+      // Разблокируем редактор при завершении
+      if (editor && mode === 'edit') {
+        editor.contentDOM.style.pointerEvents = '';
+        editor.contentDOM.style.opacity = '';
+      }
 
-        // For editing mode, apply changes immediately
-        if (mode === 'edit' && selection) {
-          applyChanges(finalText, selection);
-          updateMessage(loadingMessageId, 'Готово. Что ещё?', false);
-        }
+      updateMessage(loadingMessageId, finalText, false);
+
+      // For editing mode, apply changes immediately
+      if (mode === 'edit' && selection) {
+        applyChanges(finalText, selection);
+        updateMessage(loadingMessageId, 'Готово. Что ещё?', false);
+      }
       },
       (error) => {
         console.error('[AI Chat] API Error:', error);
