@@ -84,14 +84,17 @@ CRITICAL REQUIREMENTS:
 2. Consider context and format professionally using the full range of Markdown syntax
 3. For mathematical formulas:
    - Inline formulas: use $...$ syntax
-   - Block formulas: use $$...$$ syntax  
+   - Block formulas: use $$...$$ syntax
    - Consider A4 page width for formula formatting
-4. Output ONLY the formatted Markdown text - no explanations, wrappers, or meta-commentary
-5. DO NOT abbreviate, shorten, or delete anything from the original text
-6. DO NOT add anything (no headers, comments, or additional content)
-7. Your ONLY task is formatting the existing text into Markdown
+4. Output ONLY the formatted Markdown text between ----START and ----END markers
+5. DO NOT add any text outside these markers
+6. DO NOT abbreviate, shorten, or delete anything from the original text
+7. DO NOT add anything (no headers, comments, or additional content)
+8. Your ONLY task is formatting the existing text into Markdown
 
 Text to format:
+
+----START
 `;
 
 // Функция для создания сообщения пользователя
@@ -101,12 +104,38 @@ function createUserMessage(content) {
 
 // Функция для создания промпта форматирования
 function createFormattingPrompt(text) {
-  return createUserMessage(FORMATTING_PROMPT + text);
+  return createUserMessage(FORMATTING_PROMPT + text + '\n----END');
 }
 
-// Очистка текста от обертки ```markdown ```
+// Очистка текста от обертки ```markdown ``` и извлечение текста между маркерами
 function cleanMarkdownWrapper(text) {
   const trimmed = text.trim();
+
+  // Сначала ищем ----START и ----END маркеры
+  const startMarker = '----START';
+  const endMarker = '----END';
+
+  const startIndex = trimmed.indexOf(startMarker);
+  const endIndex = trimmed.indexOf(endMarker);
+
+  if (startIndex !== -1 && endIndex !== -1 && startIndex < endIndex) {
+    // Извлекаем текст между маркерами
+    const start = startIndex + startMarker.length;
+    let extracted = trimmed.substring(start, endIndex).trim();
+
+    // Убираем возможные остатки ```markdown ```
+    if (extracted.startsWith('```markdown') && extracted.endsWith('```')) {
+      extracted = extracted.slice('```markdown'.length);
+      if (extracted.startsWith('\n')) extracted = extracted.slice(1);
+      if (extracted.endsWith('\n```')) extracted = extracted.slice(0, -4);
+      else if (extracted.endsWith('```')) extracted = extracted.slice(0, -3);
+      extracted = extracted.trim();
+    }
+
+    return extracted;
+  }
+
+  // Fallback к старой логике для обратной совместимости
   if (trimmed.startsWith('```markdown') && trimmed.endsWith('```')) {
     // Удаляем начальный ```markdown и конечный ```
     let cleaned = trimmed.slice('```markdown'.length);

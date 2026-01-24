@@ -19,9 +19,13 @@ CRITICAL CONSTRAINTS:
    - Inline formulas: use $...$ syntax
    - Block formulas: use $$...$$ syntax
    - Consider A4 page width for formula formatting
-5. Return ONLY the edited text with no additional text before or after
+5. Return ONLY the edited text between ----START and ----END markers
+6. Your output must contain nothing but the modified text between markers
 
-Your output must contain nothing but the modified text.`;
+Text to edit:
+
+----START
+`;
 
 // Chat state
 let conversations = [];
@@ -538,12 +542,12 @@ async function handleEditingMode(message) {
   if (hasSelection) {
     // Edit selected text
     textToEdit = editor.state.doc.sliceString(selection.from, selection.to);
-    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
+    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}${textToEdit}\n----END`;
     modeSelection = selection;
   } else {
     // Edit entire document content
     textToEdit = editor.state.doc.toString();
-    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
+    prompt = `${message}\n\n${EDITING_PROMPT_SUFFIX}${textToEdit}\n----END`;
     modeSelection = { from: 0, to: textToEdit.length };
   }
 
@@ -823,8 +827,8 @@ function handleEditingRetry(editor, selection, lastMessage) {
     originalDocText.slice(selection.from, selection.to) :
     editor.state.doc.sliceString(selection.from, selection.to);
 
-  // Повторно вызываем AI
-  const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
+  // Повторно вызываем AI с новыми маркерами
+  const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}${textToEdit}\n----END`;
   callAIAPI(prompt, 'edit', selection);
 
   hideSpinner();
