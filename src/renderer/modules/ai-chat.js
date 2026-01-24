@@ -726,13 +726,12 @@ function applyChanges(content, selection) {
     .replace(/[\s\n]*\]$/, '') // Убираем конечные ]
     .trim();
 
-  // Сохраняем контекст ПЕРЕД изменениями
-  const originalSelectedText = editor.state.doc.sliceString(selection.from, selection.to);
+  // Сохраняем контекст ПЕРЕД изменениями - сохраняем абсолютные позиции
   const fullOriginalText = editor.state.doc.toString();
   const context = {
     editor,
-    selection: { ...selection }, // Копия selection
-    originalText: originalSelectedText,
+    selectionFrom: selection.from,
+    selectionTo: selection.to,
     fullOriginalText,
     lastMessage: window._aiChatLastMessage || (inputElement ? inputElement.value.trim() : '')
   };
@@ -763,18 +762,18 @@ function applyChanges(content, selection) {
       // Попробовать ещё раз - повторяем последний запрос
       console.log('[AI Chat] Повторная генерация');
       if (window._aiChatLastContext) {
-        const { editor, selection, originalText, lastMessage } = window._aiChatLastContext;
-        handleEditingRetry(editor, selection, originalText, lastMessage);
+        const { editor, selectionFrom, selectionTo, lastMessage } = window._aiChatLastContext;
+        handleEditingRetry(editor, { from: selectionFrom, to: selectionTo }, lastMessage);
       }
     },
     () => {
       // Отменить изменения - восстанавливаем текст
       console.log('[AI Chat] Изменения отменены');
       if (window._aiChatLastContext) {
-        const { fullOriginalText, selection } = window._aiChatLastContext;
+        const { fullOriginalText, selectionFrom, selectionTo } = window._aiChatLastContext;
         editor.dispatch({
           changes: { from: 0, to: editor.state.doc.length, insert: fullOriginalText },
-          selection: { anchor: selection.from, head: selection.to }
+          selection: { anchor: selectionFrom, head: selectionTo }
         });
       }
       window._aiChatLastContext = null;
@@ -785,42 +784,34 @@ function applyChanges(content, selection) {
 }
 
 // Handle editing retry
-function handleEditingRetry(editor, selection, originalText, lastMessage) {
+function handleEditingRetry(editor, selection, lastMessage) {
   if (!editor || !lastMessage) return;
 
   showSpinner();
 
-  // Находим текущую позицию оригинального текста в документе
-  const currentDocText = editor.state.doc.toString();
+  // Восстанавливаем полный оригинальный текст
   const originalDocText = window._aiChatFullOriginalText;
+  const currentDocText = editor.state.doc.toString();
 
   if (originalDocText && currentDocText !== originalDocText) {
     // Восстанавливаем полный оригинальный текст
     editor.dispatch({
       changes: { from: 0, to: editor.state.doc.length, insert: originalDocText }
     });
-
-    // Заново находим позицию выделенного фрагмента
-    const selectionStart = originalDocText.indexOf(originalText);
-    if (selectionStart !== -1) {
-      const newSelection = {
-        from: selectionStart,
-        to: selectionStart + originalText.length
-      };
-
-      editor.dispatch({
-        selection: { anchor: newSelection.from, head: newSelection.to }
-      });
-
-      // Повторно вызываем AI с обновленным selection
-      const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${originalText}`;
-      callAIAPI(prompt, 'edit', newSelection);
-      return;
-    }
   }
 
-  // Fallback на старый метод
-  const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${originalText}`;
+  // Используем сохраненные абсолютные позиции
+  editor.dispatch({
+    selection: { anchor: selection.from, head: selection.to }
+  });
+
+  // Получаем текст для редактирования из оригинального документа
+  const textToEdit = originalDocText ?
+    originalDocText.slice(selection.from, selection.to) :
+    editor.state.doc.sliceString(selection.from, selection.to);
+
+  // Повторно вызываем AI
+  const prompt = `${lastMessage}\n\n${EDITING_PROMPT_SUFFIX}\n\nText to edit:\n${textToEdit}`;
   callAIAPI(prompt, 'edit', selection);
 
   hideSpinner();
