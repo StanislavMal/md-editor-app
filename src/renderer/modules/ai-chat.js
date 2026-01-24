@@ -620,7 +620,11 @@ async function callAIAPI(message, mode, selection = null) {
       // For editing mode, apply changes immediately
       if (mode === 'edit' && selection) {
         applyChanges(finalText, selection);
-        updateMessage(loadingMessageId, 'Готово. Что ещё?', false);
+        // Add "Готово. Что ещё?" message only if it doesn't already exist
+        const hasDoneMessage = chatHistory.some(msg => msg.content === 'Готово. Что ещё?');
+        if (!hasDoneMessage) {
+          updateMessage(loadingMessageId, 'Готово. Что ещё?', false);
+        }
       }
       },
       (error) => {

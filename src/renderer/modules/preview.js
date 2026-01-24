@@ -12,6 +12,32 @@ const previewPane = document.querySelector('.preview-pane');
 const previewContainer = document.getElementById('pdf-simulation-container');
 let previewContent;
 
+// --- Обработчик кликов по ссылкам ---
+function setupLinkHandlers() {
+  if (!previewContainer) return;
+  
+  previewContainer.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.href) {
+      e.preventDefault();
+      const href = link.href;
+      
+      // Проверяем, является ли ссылка внешней (не якорной и не файловой)
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        // Открываем во внешнем браузере
+        if (window.electronAPI && window.electronAPI.openExternal) {
+          window.electronAPI.openExternal(href);
+        } else {
+          console.warn('[Preview] openExternal API not available');
+        }
+      } else {
+        // Для локальных ссылок (якорей) оставляем стандартное поведение
+        window.location.href = href;
+      }
+    }
+  });
+}
+
 /**
  * Инициализирует DOM-структуру для превью.
  */
@@ -384,3 +410,4 @@ export function getPreviewHtmlContent() {
         .join('');
 }
 initializePreviewDOM();
+setupLinkHandlers();
