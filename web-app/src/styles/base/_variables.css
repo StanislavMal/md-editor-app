@@ -1,0 +1,107 @@
+/* src/renderer/styles/base/_variables.css */
+
+/* ================================================================
+   DESIGN TOKENS - LIGHT THEME
+   ================================================================ */
+:root {
+  /* Цвета бренда */
+  --color-primary: #0969da;
+  --color-primary-hover: #0860ca;
+  --color-primary-active: #0757ba;
+  --color-accent: #8250df;
+  --color-accent-hover: #7640d0;
+  --color-success: #1a7f37;
+  --color-success-hover: #1a7f37;
+  --color-danger: #cf222e;
+  --color-error: #cf222e;
+  --color-error-hover: #b6232a;
+  
+  /* Нейтральные цвета - LIGHT */
+  --color-canvas: #fafbfc;
+  --color-canvas-subtle: #C0C0C0;
+  --color-canvas-inset: #f3f4f6;
+  --color-toolbar-bg: #f8fafc;
+  --color-toolbar-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --color-border-default: #d0d7de;
+  --color-border-muted: #e5e7eb;
+  --color-fg-default: #1f2328;
+  --color-fg-muted: #59636e;
+  --color-fg-subtle: #6e7781;
+  
+  /* Редактор - LIGHT */
+  --color-editor-bg: #ffffff;
+  --color-editor-surface: #C0C0C0;
+  --color-editor-text: #24292f;
+  --color-editor-comment: rgba(175, 184, 193, 0.2);
+  --color-editor-gutter: transparent;
+  --color-editor-line-number: #6e7781;
+  
+  /* Тени */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-page: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-toolbar: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* Типографика */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  
+  /* Размеры */
+  --title-bar-height: 30px;
+  --toolbar-height: 56px;
+  --status-bar-height: 23px;
+  --border-radius: 6px;
+  --border-radius-lg: 8px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Zoom и масштабирование */
+  --zoom-scale: 1;
+}
+
+/* ================================================================
+   DESIGN TOKENS - DARK THEME
+   ================================================================ */
+[data-theme="dark"] {
+  /* Цвета бренда - DARK */
+  --color-error: #f85149;
+  --color-error-hover: #da3633;
+
+  /* Нейтральные цвета - DARK */
+  --color-canvas: #0d1117;
+  --color-canvas-subtle: #010409;
+  --color-canvas-inset: #1c2128;
+  --color-toolbar-bg: #161b22;
+  --color-toolbar-gradient: linear-gradient(135deg, #1c2128 0%, #0f1419 100%);
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-fg-default: #e6edf3;
+  --color-fg-muted: #8d96a0;
+  --color-fg-subtle: #6e7681;
+  
+  /* Редактор - DARK (как Google Colab) */
+  --color-editor-bg: #1e1e1e;
+  --color-editor-surface: #010409;
+  --color-editor-text: #d4d4d4;
+  --color-editor-comment: rgba(99, 110, 123, 0.3);
+  --color-editor-gutter: #1e1e1e;
+  --color-editor-line-number: #858585;
+  
+  /* Тени в темной теме */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+  --shadow-page: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.6);
+  --shadow-toolbar: 0 2px 12px rgba(0, 0, 0, 0.15);
+}

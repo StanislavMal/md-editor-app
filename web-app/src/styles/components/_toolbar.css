@@ -1,0 +1,91 @@
+/* src/renderer/styles/components/_toolbar.css */
+
+.toolbar {
+  position: sticky;
+  top: var(--title-bar-height);
+  left: 0;
+  width: 100%;
+  height: var(--toolbar-height);
+  margin-top: var(--title-bar-height);
+  background: var(--color-toolbar-gradient);
+  border-bottom: 1px solid var(--color-border-muted);
+  box-shadow: var(--shadow-toolbar, 0 2px 8px rgba(0, 0, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  z-index: 1000;
+  transition: all var(--transition-base);
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.toolbar-left { flex: 1; justify-content: flex-start; }
+.toolbar-center { flex: 0; justify-content: center; align-items: center; }
+.toolbar-right { flex: 1; justify-content: flex-end; }
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border-muted);
+  margin: 0 var(--spacing-xs);
+  transition: background-color var(--transition-base);
+}
+
+
+
+/* Адаптивность тулбара */
+@media (max-width: 1400px) {
+  .toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--toolbar-height);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  .toolbar-center {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 1024px) {
+  .toolbar {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar-group {
+    gap: 2px;
+  }
+  .toolbar-divider {
+    margin: 0 2px;
+  }
+  .toolbar-center {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-section {
+    gap: var(--spacing-xs);
+  }
+  .toolbar-group {
+    gap: 1px;
+  }
+  .btn-icon {
+    min-width: 32px;
+    padding: var(--spacing-xs);
+  }
+}
