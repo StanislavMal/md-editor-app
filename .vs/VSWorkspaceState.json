@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\assets",
+    "\\src",
+    "\\src\\main",
+    "\\src\\preload",
+    "\\src\\renderer",
+    "\\src\\renderer\\modules"
+  ],
+  "SelectedNode": "\\src\\main\\file-utils.js",
+  "PreviewInSolutionExplorer": false
+}

@@ -26,3 +26,5 @@ out/
 dist/
 dist-ssr/
 build/
+
+generate-project-context.js
