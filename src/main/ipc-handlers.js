@@ -1,6 +1,6 @@
 // src/main/ipc-handlers.js
 
-import { ipcMain, dialog, Menu, BrowserWindow, app, net } from 'electron';
+import { ipcMain, dialog, Menu, BrowserWindow, app, net, shell } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import fsSync from 'fs';
@@ -341,6 +341,27 @@ export function registerIpcHandlers(mainWindow) {
         };
       })()
     `);
+  });
+
+  // Обработчик для открытия внешних ссылок
+  ipcMain.handle('open-external', async (event, url) => {
+    try {
+      await shell.openExternal(url);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] Error opening external URL:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Обработчик для получения GitHub CSS
+  ipcMain.handle('get-github-css', async () => {
+    try {
+      return await getGitHubCSS();
+    } catch (error) {
+      console.error('[IPC] Error getting GitHub CSS:', error);
+      return '';
+    }
   });
 
   console.log('[IPC] registerIpcHandlers: Все обработчики зарегистрированы.');
