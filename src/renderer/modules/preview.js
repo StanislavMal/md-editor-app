@@ -143,7 +143,11 @@ async function updatePreview(markdownText) {
             console.log('[Preview] MathJax formulas processed');
         } catch (error) {
             console.error('[Preview] MathJax typeset failed:', error);
+            showMathJaxError(error);
         }
+    } else if (window.MathJax === undefined) {
+        console.warn('[Preview] MathJax not loaded');
+        showMathJaxError(new Error('MathJax library not loaded'));
     }
     console.timeEnd('MathJax Typeset');
 
@@ -151,6 +155,25 @@ async function updatePreview(markdownText) {
     paginateAndRender(previewContent.children);
     console.timeEnd('Paginate And Render');
     console.timeEnd('Update Preview Total');
+}
+
+// Функция для отображения ошибки MathJax
+function showMathJaxError(error) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 10px; margin: 10px; border-radius: 4px; font-size: 12px;';
+    errorDiv.textContent = `⚠️ Ошибка MathJax: ${error.message}. Формулы могут отображаться некорректно.`;
+    errorDiv.id = 'mathjax-error-notice';
+    
+    // Удаляем предыдущее уведомление если есть
+    const existingError = document.getElementById('mathjax-error-notice');
+    if (existingError) existingError.remove();
+    
+    previewContent.insertBefore(errorDiv, previewContent.firstChild);
+    
+    // Автоматически скрываем через 5 секунд
+    setTimeout(() => {
+        if (errorDiv.parentNode) errorDiv.remove();
+    }, 5000);
 }
 async function paginateAndRender(nodes) {
     const processId = currentPaginationProcessId;
@@ -371,9 +394,11 @@ function handleTableBlock(node, currentPage, pages, measurementContainer, pageCo
     currentPageContent.appendChild(currentTable);
 
     for (const row of rows) {
-        currentTbody.appendChild(row.cloneNode(true));
+        // Рекурсивная обработка вложенных элементов в ячейках таблицы
+        const clonedRow = row.cloneNode(true);
+        currentTbody.appendChild(clonedRow);
         if (currentPageContent.scrollHeight > pageContentHeight) {
-            currentTbody.lastChild.remove();
+            clonedRow.remove();
             pages.push(currentPage);
 
             currentPage = createPage();
@@ -385,7 +410,10 @@ function handleTableBlock(node, currentPage, pages, measurementContainer, pageCo
             if (thead) currentTable.appendChild(thead.cloneNode(true));
             currentTbody = currentTable.appendChild(document.createElement('tbody'));
             currentPageContent.appendChild(currentTable);
-            currentTbody.appendChild(row.cloneNode(true));
+            
+            // Повторно клонируем строку для новой страницы
+            const newRow = row.cloneNode(true);
+            currentTbody.appendChild(newRow);
         }
     }
     return currentPage;

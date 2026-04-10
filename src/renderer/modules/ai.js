@@ -216,22 +216,27 @@ async function callGeminiAPI(text, apiKey, modelConfig) {
 
 // Вызов Groq API
 async function callGroqAPI(text, apiKey, modelConfig) {
-  const groq = new Groq({
-    apiKey: apiKey,
-    dangerouslyAllowBrowser: true,
-  });
+  try {
+    const groq = new Groq({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true,
+    });
 
-  const completion = await groq.chat.completions.create({
-    model: modelConfig.id,
-    messages: [createFormattingPrompt(text)],
-    temperature: 1,
-    max_tokens: modelConfig.maxTokens,
-    top_p: 1,
-    stream: false,
-    stop: null
-  });
+    const completion = await groq.chat.completions.create({
+      model: modelConfig.id,
+      messages: [createFormattingPrompt(text)],
+      temperature: 1,
+      max_tokens: modelConfig.maxTokens,
+      top_p: 1,
+      stream: false,
+      stop: null
+    });
 
-  return cleanMarkdownWrapper(completion.choices[0].message.content);
+    return cleanMarkdownWrapper(completion.choices[0].message.content);
+  } catch (error) {
+    console.error('[AI] Groq API error:', error);
+    throw error;
+  }
 }
 
 // Универсальная функция для streaming API
@@ -297,36 +302,41 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
       const { done, value } = await reader.read();
 
       if (done) {
-        // Финализируем декодирование всех накопленных байтов
-        const allBytes = new Uint8Array(buffer.reduce((acc, chunk) => acc + chunk.length, 0));
-        let offset = 0;
-        for (const chunk of buffer) {
-          allBytes.set(chunk, offset);
-          offset += chunk.length;
-        }
-        const finalText = decoder.decode(allBytes);
+        try {
+          // Финализируем декодирование всех накопленных байтов
+          const allBytes = new Uint8Array(buffer.reduce((acc, chunk) => acc + chunk.length, 0));
+          let offset = 0;
+          for (const chunk of buffer) {
+            allBytes.set(chunk, offset);
+            offset += chunk.length;
+          }
+          const finalText = decoder.decode(allBytes);
 
-        // Парсим финальный текст
-        const lines = finalText.split('\n').filter(line => line.trim());
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.slice(6);
-            if (jsonStr === '[DONE]') {
-        onComplete(cleanTextArtifacts(cleanMarkdownWrapper(accumulatedText)));
-              return;
-            }
-            try {
-              const data = JSON.parse(jsonStr);
-              const content = data.choices?.[0]?.delta?.content;
-              if (content) {
-                accumulatedText += content;
+          // Парсим финальный текст
+          const lines = finalText.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              if (jsonStr === '[DONE]') {
+                onComplete(cleanTextArtifacts(cleanMarkdownWrapper(accumulatedText)));
+                return;
               }
-            } catch (e) {
-              // Игнорируем невалидный JSON
+              try {
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedText += content;
+                }
+              } catch (e) {
+                // Игнорируем невалидный JSON
+              }
             }
           }
+          onComplete(cleanMarkdownWrapper(accumulatedText));
+        } catch (decodeError) {
+          console.error('[AI] Stream decode error:', decodeError);
+          onError(new Error(`Ошибка декодирования потока: ${decodeError.message}`));
         }
-        onComplete(cleanMarkdownWrapper(accumulatedText));
         break;
       }
 
@@ -360,6 +370,7 @@ async function streamAPI(provider, messages, apiKey, onChunk, onComplete, onErro
       }
     }
   } catch (error) {
+    console.error('[AI] Stream API error:', error);
     onError(new Error(`Ошибка стрима ${provider}: ${error.message}`));
   }
 }

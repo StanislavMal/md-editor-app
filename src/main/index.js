@@ -27,7 +27,8 @@ function createSplashWindow() {
     splashWindow.loadURL('http://localhost:5173/splash.html');
   } else {
     console.log('[Splash] Loading splash from file');
-    splashWindow.loadFile(path.join(__dirname, '../renderer/splash.html'));
+    // В продакшене splash.html находится в extraResources
+    splashWindow.loadFile(path.join(app.getAppPath(), 'renderer/public/splash.html'));
   }
 
   splashWindow.once('ready-to-show', () => {
@@ -49,7 +50,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     frame: false,
-    icon: path.join(__dirname, '../../assets/icon.png'),
+    icon: path.join(app.getAppPath(), isDev ? 'assets/icon.png' : '../../assets/icon.png'),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -68,10 +69,18 @@ function createWindow() {
     mainWindow.webContents.send('fullscreen-changed', false);
   });
 
-  // Обработчик закрытия окна
-  mainWindow.on('close', async (event) => {
-    console.log('[Main] Close event triggered');
-    event.preventDefault(); // Предотвращаем немедленное закрытие
+// Обработчик закрытия окна с защитой от гонки условий
+let isClosing = false;
+mainWindow.on('close', async (event) => {
+  console.log('[Main] Close event triggered');
+  
+  // Защита от повторного вызова
+  if (isClosing) {
+    return;
+  }
+  isClosing = true;
+  
+  event.preventDefault(); // Предотвращаем немедленное закрытие
 
     try {
       // Проверяем, есть ли несохраненные изменения
@@ -153,6 +162,11 @@ function createWindow() {
       console.error('[Main] Error in close handler:', error);
       // В случае ошибки все равно закрываем окно
       mainWindow.destroy();
+    } finally {
+      // Сбрасываем флаг только если окно не было уничтожено
+      if (!mainWindow.isDestroyed()) {
+        isClosing = false;
+      }
     }
   });
   

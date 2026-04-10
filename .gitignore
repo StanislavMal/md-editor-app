@@ -1,30 +1,57 @@
-# Node.js
+```
+# Dependencies
 node_modules/
-npm-debug.log*
-yarn-error.log*
-yarn-debug.log*
 
-# Build
+# Build artifacts
 dist/
-dist-ssr/
 build/
+target/
 
-# IDE & OS
-.DS_Store
+# Logs and temp files
 *.log
+*.tmp
+
+# Environment
 .env
 .env.local
+*.env.*
 
-# Tools
-.vinxi
+# Editors
+.vscode/
+.idea/
 
-# Markdown project docs (если не нужно отслеживать)
-PROJECT_CONTEXT.md
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Build output
-out/
-dist/
-dist-ssr/
-build/
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
-generate-project-context.js
+# Compression
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
