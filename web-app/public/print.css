@@ -1,0 +1,185 @@
+/* print.css */
+
+@page {
+  margin: 0;
+  size: A4;
+}
+
+* {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  text-rendering: geometricPrecision !important;
+}
+
+.page {
+  height: 297mm;
+  width: 210mm;
+}
+
+/* Применяем разрыв страницы ко всем .page, КРОМЕ последнего */
+.page:not(:last-child) {
+  page-break-after: always;
+}
+
+/* ================================================================
+   СИНХРОНИЗИРОВАННЫЕ СТИЛИ MARKDOWN КОНТЕНТА
+   ================================================================ */
+
+.page .markdown-body {
+  height: 100%;
+  width: 100%;
+  padding: 15mm !important;
+  box-sizing: border-box !important;
+  max-width: none;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2328 !important; 
+}
+
+.markdown-body img {
+  max-width: 100%;
+  max-height: calc(297mm - 30mm); 
+  height: auto;
+  display: block;
+  margin: 1em 0;
+  border-radius: 6px; 
+}
+
+.markdown-body p {
+  display: block !important;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  page-break-inside: auto;
+  orphans: 3;
+  widows: 3;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+.markdown-body pre { 
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  background-color: #f6f8fa !important; 
+  border: 1px solid #d0d7de; 
+  border-radius: 6px; 
+}
+
+.markdown-body pre code {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Стили для встроенного кода (например, `вот так`) */
+.markdown-body code {
+  background-color: rgba(175, 184, 193, 0.2); 
+  padding: 0.2em 0.4em; 
+  border-radius: 4px; 
+  font-size: 85%; 
+}
+
+/* Стили для блоков кода (``` ... ```) */
+.markdown-body .hljs {
+  background-color: #f6f8fa !important;
+  border-radius: 6px;
+  padding: 16px !important;
+  font-size: 14px;      
+  line-height: 1.5;     
+}
+
+/* --- НОВЫЕ СТИЛИ ДЛЯ КОРРЕКТНОГО ОТОБРАЖЕНИЯ КОДА --- */
+.markdown-body pre.hljs code {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.markdown-body pre.hljs code > span[data-line] {
+  display: block !important;
+  min-height: 1em !important;
+}
+
+/* Стили для плашки с названием языка в PDF */
+.markdown-body pre.hljs {
+  position: relative !important;
+}
+
+.markdown-body pre.hljs[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  padding: 0 5px !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important; 
+  font-size: 10px !important; 
+  font-weight: 600 !important; 
+  color: #7a1013;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+/* Стили для таблиц */
+.markdown-body table {
+  box-sizing: border-box !important;
+  display: inline-table !important;
+  table-layout: auto !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0;
+  overflow: hidden !important;
+  border-collapse: collapse;
+}
+
+.markdown-body td,
+.markdown-body th {
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+/* Стили для task lists (чекбоксов) */
+.markdown-body input[type="checkbox"] {
+  margin: 0 0.2em 0.25em -1.6em;
+  vertical-align: middle;
+}
+
+.markdown-body li:has(input[type="checkbox"]) {
+  list-style: none;
+}
+
+.markdown-body li:has(input[type="checkbox"])::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5em;
+  border: 1px solid #d0d7de;
+  border-radius: 3px;
+  background-color: #ffffff;
+  vertical-align: middle;
+}
+
+.markdown-body li:has(input[type="checkbox"]:checked)::before {
+  background-color: #0969da;
+  border-color: #0969da;
+}
+
+.markdown-body li:has(input[type="checkbox"]:checked)::after {
+  content: "✓";
+  display: inline-block;
+  position: absolute;
+  margin-left: -1.1em;
+  margin-top: 0.1em;
+  color: #ffffff;
+  font-size: 0.8em;
+  font-weight: bold;
+}

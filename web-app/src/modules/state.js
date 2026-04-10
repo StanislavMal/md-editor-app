@@ -1,0 +1,182 @@
+// src/renderer/modules/state.js
+console.log('[Module Loaded] state.js');
+
+import { scheduleUpdate } from './preview.js';
+import { getPanelOpenState } from './ai-chat.js';
+
+const state = {
+  previewVisible: true,
+  zoomLevel: 100,
+  currentFilePath: null,
+  hasUnsavedChanges: false,
+  isFileLoadedFromDisk: false, // Флаг, был ли файл загружен с диска
+  ui: {
+    editorPane: null,
+    previewPane: null,
+    previewContainer: null,
+    togglePreviewBtn: null,
+    zoomLevelIndicator: null,
+  }
+};
+
+export function getState() {
+  return { ...state };
+}
+
+export function initializeState() {
+  console.log('[State] Инициализация состояния и кэширование UI-элементов.');
+  state.ui.editorPane = document.querySelector('.editor-pane');
+  state.ui.previewPane = document.querySelector('.preview-pane');
+  state.ui.previewContainer = document.getElementById('pdf-simulation-container');
+  state.ui.togglePreviewBtn = document.getElementById('toggle-preview');
+  state.ui.zoomLevelIndicator = document.getElementById('zoom-level');
+
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Инициализируем zoom
+  const savedZoom = localStorage.getItem('zoomLevel');
+  if (savedZoom) {
+    state.zoomLevel = parseInt(savedZoom, 10);
+  }
+  setZoom(state.zoomLevel);
+
+  // Загружаем сохраненный currentFilePath
+  const savedFilePath = localStorage.getItem('currentFilePath');
+  if (savedFilePath) {
+    state.currentFilePath = savedFilePath;
+    console.log('[State] Восстановлен currentFilePath из localStorage:', savedFilePath);
+  }
+}
+
+export function togglePreview(editorView) {
+  state.previewVisible = !state.previewVisible;
+
+  if (state.previewVisible) {
+    state.ui.previewPane.classList.remove('hidden');
+    state.ui.togglePreviewBtn.classList.add('active');
+    state.ui.togglePreviewBtn.querySelector('.btn-text').textContent = 'Превью';
+    if(editorView) {
+      scheduleUpdate(editorView.state.doc.toString());
+    }
+  } else {
+    state.ui.previewPane.classList.add('hidden');
+    state.ui.togglePreviewBtn.classList.remove('active');
+    state.ui.togglePreviewBtn.querySelector('.btn-text').textContent = 'Показать';
+  }
+
+  // Update layout based on new state
+  updateEditorPaneFullwidth();
+}
+
+// Update editor pane fullwidth based on preview and panel state
+export function updateEditorPaneFullwidth() {
+  if (!state.ui.editorPane) return;
+
+  const panelElement = document.getElementById('ai-chat-panel');
+
+  if (state.previewVisible) {
+    state.ui.editorPane.classList.remove('fullwidth');
+    if (panelElement) {
+      panelElement.classList.remove('expanded');
+    }
+  } else {
+    if (getPanelOpenState()) {
+      state.ui.editorPane.classList.remove('fullwidth');
+      if (panelElement) {
+        panelElement.classList.add('expanded');
+      }
+    } else {
+      state.ui.editorPane.classList.add('fullwidth');
+      if (panelElement) {
+        panelElement.classList.remove('expanded');
+      }
+    }
+  }
+}
+
+export function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  console.log(`🎨 Тема изменена на: ${newTheme}`);
+}
+
+export function setZoom(newZoom) {
+  state.zoomLevel = Math.max(50, Math.min(200, newZoom));
+  // Применяем zoom только к редактору и превью через CSS переменные
+  const scale = state.zoomLevel / 100;
+  state.ui.editorPane.style.setProperty('--zoom-scale', scale);
+  state.ui.previewPane.style.setProperty('--zoom-scale', scale);
+
+  // Обновляем индикатор в статус-баре
+  const zoomIndicator = document.getElementById('zoom-level');
+  if (zoomIndicator) {
+    zoomIndicator.textContent = `${state.zoomLevel}%`;
+  }
+
+  // Сохраняем в localStorage
+  localStorage.setItem('zoomLevel', state.zoomLevel);
+}
+
+export function zoomIn() {
+  setZoom(state.zoomLevel + 10);
+}
+
+export function zoomOut() {
+  setZoom(state.zoomLevel - 10);
+}
+
+export function resetZoom() {
+  setZoom(100);
+}
+
+export function setCurrentFile(filePath) {
+    state.currentFilePath = filePath;
+    // Сохраняем в localStorage для persistence между перезапусками
+    if (filePath) {
+        localStorage.setItem('currentFilePath', filePath);
+    } else {
+        localStorage.removeItem('currentFilePath');
+    }
+}
+
+export function setFileLoadedFromDisk(loaded) {
+    state.isFileLoadedFromDisk = loaded;
+}
+
+export function isFileLoadedFromDisk() {
+    return state.isFileLoadedFromDisk;
+}
+
+export function getCurrentFileName() {
+    if (!state.currentFilePath) {
+        console.log('[State] getCurrentFileName: currentFilePath не установлен');
+        return null;
+    }
+    // Извлекаем имя файла без расширения
+    const fileName = state.currentFilePath.split(/[/\\]/).pop();
+    const baseName = fileName.replace(/\.md$/i, '');
+    console.log(`[State] getCurrentFileName: возвращаем "${baseName}" из "${state.currentFilePath}"`);
+    return baseName;
+}
+
+export function getCurrentFilePath() {
+    return state.currentFilePath;
+}
+
+export function setUnsavedChanges(hasChanges) {
+    state.hasUnsavedChanges = hasChanges;
+    updateWindowTitle();
+}
+
+export function hasUnsavedChanges() {
+    return state.hasUnsavedChanges;
+}
+
+function updateWindowTitle() {
+    const baseTitle = 'Markdown Editor Pro';
+    const title = state.hasUnsavedChanges ? `*${baseTitle}` : baseTitle;
+    document.title = title;
+}
